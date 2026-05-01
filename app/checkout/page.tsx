@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, FormEvent } from "react";
+import { useState, useMemo, useEffect, FormEvent, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 declare global {
@@ -23,7 +23,7 @@ const ROOMS: Record<string, { name: string; img: string; price: number; type: "r
   kedarnath: { name: "Kedarnath Yatra", img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200&q=80", price: 12000, type: "tour" },
 };
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
   const search = useSearchParams();
   const id = search.get("id") || "deluxe";
@@ -418,5 +418,13 @@ export default function CheckoutPage() {
         </div>
       </section>
     </SiteShell>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense>
+      <CheckoutContent />
+    </Suspense>
   );
 }
