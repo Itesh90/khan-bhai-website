@@ -1,0 +1,204 @@
+// Prisma Schema — Khan Bhai S.
+// Datasource: PostgreSQL (Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum AdminRole {
+  SUPERADMIN
+  STAFF
+}
+
+enum BookingType {
+  room
+  tour
+}
+
+enum BookingStatus {
+  pending
+  paid
+  confirmed
+  cancelled
+}
+
+enum PaymentStatus {
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+}
+
+enum ContactType {
+  room
+  tour
+  general
+}
+
+// ─────────────────────────────────────────────
+// Admin
+// ─────────────────────────────────────────────
+
+model Admin {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  /// Bcrypt-hashed password — field named `password` to match existing auth code
+  password   String
+  name       String
+  role       AdminRole @default(STAFF)
+  last_login DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([email])
+  @@map("admins")
+}
+
+// ─────────────────────────────────────────────
+// Room
+// ─────────────────────────────────────────────
+
+model Room {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  /// Price per night in INR — stored as Decimal for precision
+  price       Decimal   @db.Decimal(10, 2)
+  maxGuests   Int
+  amenities   Json      @default("[]")
+  images      Json      @default("[]")
+  available   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  bookings    Booking[]
+
+  @@index([available])
+  @@map("rooms")
+}
+
+// ─────────────────────────────────────────────
+// Tour
+// ─────────────────────────────────────────────
+
+model Tour {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  destination String
+  /// Price per person in INR — stored as Decimal for precision
+  price       Decimal   @db.Decimal(10, 2)
+  duration    Int
+  maxGuests   Int
+  images      Json      @default("[]")
+  /// Package inclusions e.g. ["Meals", "Transport", "Guide"]
+  includes    Json      @default("[]")
+  /// Structured itinerary stored as JSON array of day objects
+  itinerary   Json      @default("[]")
+  available   Boolean   @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  bookings    Booking[]
+
+  @@index([available])
+  @@index([destination])
+  @@map("tours")
+}
+
+// ─────────────────────────────────────────────
+// Booking
+// ─────────────────────────────────────────────
+
+model Booking {
+  id              String        @id @default(cuid())
+  bookingRef      String        @unique
+  type            BookingType
+  roomId          String?
+  tourId          String?
+  guestName       String
+  guestEmail      String
+  guestPhone      String
+  numberOfGuests  Int
+  checkInDate     DateTime?
+  checkOutDate    DateTime?
+  specialRequests String?
+  status          BookingStatus @default(pending)
+  totalPrice      Decimal       @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  room    Room?    @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  tour    Tour?    @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  payment Payment?
+
+  @@index([status])
+  @@index([guestEmail])
+  @@index([createdAt])
+  @@index([roomId])
+  @@index([tourId])
+  @@map("bookings")
+}
+
+// ─────────────────────────────────────────────
+// Payment
+// ─────────────────────────────────────────────
+
+model Payment {
+  id                  String        @id @default(cuid())
+  bookingId           String        @unique
+  amount              Decimal       @db.Decimal(10, 2)
+  currency            String        @default("INR")
+  paymentMethod       String        @default("razorpay")
+  razorpayOrderId     String?       @unique
+  razorpayPaymentId   String?       @unique
+  razorpaySignature   String?
+  status              PaymentStatus @default(CREATED)
+  /// Payment method type: upi, card, netbanking, wallet
+  method              String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([razorpayPaymentId])
+  @@index([bookingId])
+  @@index([createdAt])
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────────
+// ContactInquiry
+// ─────────────────────────────────────────────
+
+model ContactInquiry {
+  id        String      @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  type      ContactType @default(general)
+  /// `status` kept for backward compat with existing contactService code
+  status    String      @default("new")
+  /// Derived boolean: true when status != "new"
+  read      Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([read])
+  @@index([type])
+  @@index([createdAt])
+  @@map("contact_inquiries")
+}

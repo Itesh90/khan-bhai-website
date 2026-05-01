@@ -1,0 +1,82 @@
+@import './tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--kb-black); }
+::-webkit-scrollbar-thumb { background: var(--kb-gold-dark); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--kb-gold-soft); }
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus styles — accessible & on-brand */
+:focus-visible {
+  outline: 2px solid var(--kb-gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.kb-btn:focus-visible {
+  outline-offset: 3px;
+}
+
+/* Skip-to-content link */
+.kb-skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  background: var(--kb-gold);
+  color: #111;
+  padding: 10px 18px;
+  font-family: var(--kb-sans);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.kb-skip:focus {
+  left: 16px;
+  top: 16px;
+}
+
+/* Better date / select input look in dark mode */
+input[type="date"].kb-input,
+input[type="time"].kb-input,
+input[type="number"].kb-input,
+select.kb-input {
+  color-scheme: dark;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) sepia(1) saturate(3) hue-rotate(20deg);
+  cursor: pointer;
+  opacity: 0.7;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+/* Touch target minimums for mobile */
+@media (max-width: 720px) {
+  .kb-btn { min-height: 44px; padding: 14px 24px; }
+  .filter-chip { min-height: 40px; }
+  .nav__hamb {
+    width: 44px; height: 44px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav__hamb::before, .nav__hamb::after {
+    left: 11px; right: 11px;
+  }
+  .nav__hamb::before { top: 15px; }
+  .nav__hamb::after { bottom: 15px; }
+}

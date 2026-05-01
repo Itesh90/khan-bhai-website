@@ -1,0 +1,1602 @@
+{
+  "projectMetadata": {
+    "name": "Khan Bhai S. — Complete Build Roadmap",
+    "businessType": "Hotel · Restaurant · Travel Agency",
+    "location": "Haldwani, Golapar",
+    "extractionDate": "2026-05-01",
+    "status": "Pre-build planning phase",
+    "totalSections": 9
+  },
+
+  "section1_systemArchitecture": {
+    "title": "System Architecture",
+    "frontendLayer": {
+      "framework": "Next.js 14 App Router",
+      "components": [
+        "React Server Components",
+        "Tailwind CSS with custom gold tokens",
+        "Framer Motion animations"
+      ],
+      "hosting": "Vercel (CDN edge)",
+      "renderingModes": ["SSR", "ISR", "Edge"]
+    },
+    "backendLayer": {
+      "framework": "Next.js API Routes (serverless)",
+      "database": {
+        "provider": "Prisma ORM",
+        "database": "PostgreSQL via Supabase"
+      },
+      "authentication": "JWT-based auth (admin only)",
+      "integrations": [
+        "Razorpay webhook handler",
+        "EmailJS + WhatsApp notifier"
+      ],
+      "architecture": ["REST", "Serverless", "Webhooks"]
+    },
+    "paymentSystem": {
+      "provider": "Razorpay",
+      "description": "Test mode → live. UPI, cards, netbanking. Webhook confirms payment server-side before booking is confirmed."
+    },
+    "notificationEngine": {
+      "description": "On successful payment: EmailJS fires email to owner + auto-reply to customer. WhatsApp API sends booking summary."
+    },
+    "database": {
+      "provider": "Supabase PostgreSQL (free tier)",
+      "orm": "Prisma ORM",
+      "features": ["Schema management", "Migrations", "Type-safe queries"]
+    },
+    "highLevelFlow": [
+      "Visitor → Vercel CDN → Next.js Page",
+      "→ Book Now → /checkout page",
+      "→ Razorpay popup → Payment",
+      "→ /api/payment/verify (server)",
+      "→ Save booking to DB",
+      "→ Email + WhatsApp owner",
+      "→ /confirmation page"
+    ]
+  },
+
+  "section2_techStack": {
+    "title": "Full Tech Stack",
+    "layers": [
+      {
+        "layer": "Framework",
+        "technology": "Next.js 14 (App Router)",
+        "why": "SEO, SSR, serverless API, Vercel-native, best for India"
+      },
+      {
+        "layer": "Styling",
+        "technology": "Tailwind CSS + custom tokens",
+        "why": "Rapid black-gold design system, fully responsive"
+      },
+      {
+        "layer": "Animation",
+        "technology": "Framer Motion",
+        "why": "Silky scroll animations, entrance effects, hover states"
+      },
+      {
+        "layer": "Database",
+        "technology": "PostgreSQL (Supabase)",
+        "why": "Free tier, row-level security, real-time if needed"
+      },
+      {
+        "layer": "ORM",
+        "technology": "Prisma ORM",
+        "why": "Type-safe DB queries, auto-migrations, great DX"
+      },
+      {
+        "layer": "Auth",
+        "technology": "NextAuth.js + JWT",
+        "why": "Admin-only login, secure sessions, easy to set up"
+      },
+      {
+        "layer": "Payments",
+        "technology": "Razorpay SDK",
+        "why": "India's #1, UPI + cards, test mode → live seamlessly"
+      },
+      {
+        "layer": "Email",
+        "technology": "Nodemailer + Gmail SMTP",
+        "why": "Free, reliable, sends booking emails to owner"
+      },
+      {
+        "layer": "WhatsApp",
+        "technology": "WhatsApp Click-to-chat",
+        "why": "Zero cost, instant, no API key needed for V1"
+      },
+      {
+        "layer": "Hosting",
+        "technology": "Vercel (free tier)",
+        "why": "1-click deploy from Cursor, auto HTTPS, CDN globally"
+      },
+      {
+        "layer": "Fonts",
+        "technology": "Playfair Display + Poppins",
+        "why": "Playfair = royal feel matching logo, Poppins = clean body"
+      },
+      {
+        "layer": "Icons",
+        "technology": "Lucide React",
+        "why": "Consistent, clean, lightweight, tree-shakeable"
+      },
+      {
+        "layer": "Images",
+        "technology": "Next/Image + Unsplash",
+        "why": "Auto-optimised, lazy-loaded, WebP conversion"
+      },
+      {
+        "layer": "Forms",
+        "technology": "React Hook Form + Zod",
+        "why": "Type-safe validation, great UX, handles all booking forms"
+      },
+      {
+        "layer": "Env Secrets",
+        "technology": ".env.local + Vercel Env",
+        "why": "All keys hidden from client, never committed to git"
+      }
+    ]
+  },
+
+  "section3_databaseDesign": {
+    "title": "Database Design",
+    "provider": "PostgreSQL via Supabase",
+    "orm": "Prisma ORM",
+    "totalTables": 6,
+    "tables": {
+      "bookings": {
+        "description": "Every reservation",
+        "fields": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "constraint": "PK",
+            "description": "Auto-generated booking ID"
+          },
+          {
+            "name": "booking_type",
+            "type": "ENUM",
+            "constraint": null,
+            "description": "'room' | 'tour' | (future: restaurant)"
+          },
+          {
+            "name": "customer_name",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "Full name from checkout form"
+          },
+          {
+            "name": "customer_phone",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "WhatsApp-enabled mobile number"
+          },
+          {
+            "name": "customer_email",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "For confirmation email"
+          },
+          {
+            "name": "check_in",
+            "type": "DATE",
+            "constraint": null,
+            "description": "Check-in / tour start date"
+          },
+          {
+            "name": "check_out",
+            "type": "DATE",
+            "constraint": null,
+            "description": "Check-out / tour end date"
+          },
+          {
+            "name": "guests",
+            "type": "INT",
+            "constraint": null,
+            "description": "Number of guests"
+          },
+          {
+            "name": "amount",
+            "type": "DECIMAL",
+            "constraint": null,
+            "description": "Total amount in INR"
+          },
+          {
+            "name": "status",
+            "type": "ENUM",
+            "constraint": null,
+            "description": "'pending' | 'paid' | 'cancelled' | 'confirmed'"
+          },
+          {
+            "name": "payment_id",
+            "type": "VARCHAR",
+            "constraint": "FK",
+            "description": "→ payments.razorpay_payment_id"
+          },
+          {
+            "name": "room_id",
+            "type": "UUID",
+            "constraint": "FK",
+            "description": "→ rooms.id (null for tours)"
+          },
+          {
+            "name": "tour_id",
+            "type": "UUID",
+            "constraint": "FK",
+            "description": "→ tours.id (null for rooms)"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "constraint": null,
+            "description": "Auto UTC timestamp"
+          }
+        ]
+      },
+      "payments": {
+        "description": "Razorpay transaction log",
+        "fields": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "constraint": "PK",
+            "description": "Internal payment record"
+          },
+          {
+            "name": "booking_id",
+            "type": "UUID",
+            "constraint": "FK",
+            "description": "→ bookings.id"
+          },
+          {
+            "name": "razorpay_order_id",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "order_xxxxxxxx from Razorpay"
+          },
+          {
+            "name": "razorpay_payment_id",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "pay_xxxxxxxx — confirmed after capture"
+          },
+          {
+            "name": "razorpay_signature",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "HMAC-SHA256 signature — verified server-side"
+          },
+          {
+            "name": "amount",
+            "type": "DECIMAL",
+            "constraint": null,
+            "description": "Amount in INR (paise ÷ 100)"
+          },
+          {
+            "name": "currency",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "Always 'INR'"
+          },
+          {
+            "name": "status",
+            "type": "ENUM",
+            "constraint": null,
+            "description": "'created' | 'authorized' | 'captured' | 'failed'"
+          },
+          {
+            "name": "method",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "'upi' | 'card' | 'netbanking' | 'wallet'"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "constraint": null,
+            "description": "Transaction timestamp"
+          }
+        ]
+      },
+      "rooms": {
+        "description": "Available room types",
+        "fields": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "constraint": "PK",
+            "description": "Auto"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "Room type name"
+          },
+          {
+            "name": "description",
+            "type": "TEXT",
+            "constraint": null,
+            "description": "Rich description"
+          },
+          {
+            "name": "price_per_night",
+            "type": "DECIMAL",
+            "constraint": null,
+            "description": "INR"
+          },
+          {
+            "name": "capacity",
+            "type": "INT",
+            "constraint": null,
+            "description": "Max guests"
+          },
+          {
+            "name": "amenities",
+            "type": "JSON",
+            "constraint": null,
+            "description": "Array of strings"
+          },
+          {
+            "name": "images",
+            "type": "JSON",
+            "constraint": null,
+            "description": "Array of image URLs"
+          },
+          {
+            "name": "available",
+            "type": "BOOL",
+            "constraint": null,
+            "description": "Toggle on/off"
+          }
+        ]
+      },
+      "tours": {
+        "description": "Available tour packages",
+        "fields": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "constraint": "PK",
+            "description": "Auto"
+          },
+          {
+            "name": "title",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "Tour name"
+          },
+          {
+            "name": "destination",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "e.g. 'Nainital'"
+          },
+          {
+            "name": "duration_days",
+            "type": "INT",
+            "constraint": null,
+            "description": "Trip length"
+          },
+          {
+            "name": "price_per_person",
+            "type": "DECIMAL",
+            "constraint": null,
+            "description": "INR"
+          },
+          {
+            "name": "includes",
+            "type": "JSON",
+            "constraint": null,
+            "description": "What's included"
+          },
+          {
+            "name": "images",
+            "type": "JSON",
+            "constraint": null,
+            "description": "Gallery images"
+          },
+          {
+            "name": "itinerary",
+            "type": "JSON",
+            "constraint": null,
+            "description": "Day-by-day plan"
+          },
+          {
+            "name": "available",
+            "type": "BOOL",
+            "constraint": null,
+            "description": "Toggle"
+          }
+        ]
+      },
+      "admins": {
+        "description": "Owner/staff login",
+        "fields": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "constraint": "PK",
+            "description": "Auto"
+          },
+          {
+            "name": "email",
+            "type": "VARCHAR",
+            "constraint": "UNIQUE",
+            "description": "Email address"
+          },
+          {
+            "name": "password_hash",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "bcrypt hashed"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "Display name"
+          },
+          {
+            "name": "role",
+            "type": "ENUM",
+            "constraint": null,
+            "description": "'superadmin' | 'staff'"
+          },
+          {
+            "name": "last_login",
+            "type": "TIMESTAMP",
+            "constraint": null,
+            "description": "Tracked"
+          }
+        ]
+      },
+      "contact_inquiries": {
+        "description": "Contact form submissions",
+        "fields": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "constraint": "PK",
+            "description": "Auto"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "Sender name"
+          },
+          {
+            "name": "email",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "Reply-to"
+          },
+          {
+            "name": "phone",
+            "type": "VARCHAR",
+            "constraint": null,
+            "description": "WhatsApp"
+          },
+          {
+            "name": "message",
+            "type": "TEXT",
+            "constraint": null,
+            "description": "Inquiry text"
+          },
+          {
+            "name": "type",
+            "type": "ENUM",
+            "constraint": null,
+            "description": "'room'|'tour'|'general'"
+          },
+          {
+            "name": "read",
+            "type": "BOOL",
+            "constraint": null,
+            "description": "Admin read status"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "constraint": null,
+            "description": "Auto"
+          }
+        ]
+      }
+    }
+  },
+
+  "section4_authorizationSystem": {
+    "title": "Authorization System",
+    "userTypes": [
+      {
+        "type": "Visitors",
+        "description": "Public, no login required"
+      },
+      {
+        "type": "Admin",
+        "description": "Owner/staff, protected dashboard"
+      }
+    ],
+    "authFlow": [
+      {
+        "step": 1,
+        "title": "Admin visits /admin/login",
+        "description": "Email + password form"
+      },
+      {
+        "step": 2,
+        "title": "NextAuth verifies credentials",
+        "description": "bcrypt compare + DB check"
+      },
+      {
+        "step": 3,
+        "title": "JWT session issued",
+        "description": "HttpOnly cookie, 24hr expiry"
+      },
+      {
+        "step": 4,
+        "title": "Access granted",
+        "description": "Redirect to /admin/dashboard"
+      }
+    ],
+    "publicRoutes": [
+      "/",
+      "/restaurant",
+      "/stay",
+      "/travel",
+      "/checkout",
+      "/confirmation",
+      "/contact",
+      "/api/bookings (POST only)",
+      "/api/payment/* (POST + webhook)"
+    ],
+    "protectedRoutes": [
+      "/admin/login (Auth page)",
+      "/admin/dashboard (Overview)",
+      "/admin/bookings (All bookings)",
+      "/admin/rooms (Manage rooms)",
+      "/admin/tours (Manage tours)",
+      "/admin/inquiries (Messages)",
+      "/api/admin/* (All admin APIs)"
+    ],
+    "middlewareGuard": {
+      "description": "next.config middleware.ts intercepts all /admin/* requests",
+      "steps": [
+        "Reads JWT from HttpOnly cookie",
+        "Verifies signature with NEXTAUTH_SECRET",
+        "If invalid/expired → redirect to /admin/login",
+        "If valid → allow through to page"
+      ]
+    }
+  },
+
+  "section5_paymentAndSecurity": {
+    "title": "Payment & Financial Security System",
+    "razorpay": {
+      "testMode": "V1 with test keys (rzp_test_xxxxxx)",
+      "liveMode": "V2 after KYC (rzp_live_xxxxxx)",
+      "methods": ["UPI", "credit/debit cards", "netbanking"],
+      "currency": "INR",
+      "cardDataHandling": "No card data ever touches your server"
+    },
+    "paymentFlow": [
+      {
+        "step": 1,
+        "description": "Client clicks 'Pay Now'"
+      },
+      {
+        "step": 2,
+        "description": "/api/payment/create-order called"
+      },
+      {
+        "step": 3,
+        "description": "Razorpay returns order_id"
+      },
+      {
+        "step": 4,
+        "description": "Razorpay popup opens on client"
+      },
+      {
+        "step": 5,
+        "description": "Customer pays (UPI/card)"
+      },
+      {
+        "step": 6,
+        "description": "/api/payment/verify validates HMAC"
+      },
+      {
+        "step": 7,
+        "description": "Booking confirmed in DB"
+      }
+    ],
+    "hmacVerification": {
+      "title": "HMAC Signature Verification (Critical Security Step)",
+      "process": [
+        "Server receives: razorpay_order_id + razorpay_payment_id + razorpay_signature",
+        "Server computes: HMAC-SHA256(order_id + '|' + payment_id, RAZORPAY_KEY_SECRET)",
+        "Server compares: computed_hash === razorpay_signature",
+        "If match → payment genuine → confirm booking",
+        "If mismatch → reject → log fraud attempt → do NOT confirm"
+      ]
+    },
+    "securityMeasures": [
+      {
+        "measure": "API Keys in .env only",
+        "description": "RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET live only in server environment. Never exposed to client-side JS or committed to Git."
+      },
+      {
+        "measure": "No card data stored",
+        "description": "Razorpay handles all PCI DSS compliance. Your server never sees card numbers, CVV, or UPI PINs. Zero liability."
+      },
+      {
+        "measure": "Webhook verification",
+        "description": "Razorpay webhooks verified using X-Razorpay-Signature header + shared webhook secret. Prevents fake webhook triggers."
+      },
+      {
+        "measure": "Rate limiting on payment API",
+        "description": "Max 10 payment create-order requests per IP per hour. Prevents abuse and flooding using Vercel's edge middleware."
+      },
+      {
+        "measure": "HTTPS enforced",
+        "description": "Vercel automatically provisions SSL certificate. All traffic encrypted. HTTP redirects to HTTPS with HSTS headers."
+      },
+      {
+        "measure": "Input sanitization",
+        "description": "Zod schema validates all form inputs before any DB write. Prevents SQL injection (Prisma handles parameterized queries)."
+      }
+    ]
+  },
+
+  "section6_pages": {
+    "title": "All Pages — Structure & Content",
+    "pages": [
+      {
+        "name": "Home / Landing Page",
+        "route": "/",
+        "icon": "🏠",
+        "sections": [
+          "Sticky Navbar with logo",
+          "Full-screen Hero with video/image bg",
+          "Three service preview cards (Stay / Eat / Travel)",
+          "Why Choose Us — 4 USP icons",
+          "Testimonials / reviews strip",
+          "Instagram-style photo gallery",
+          "CTA banner 'Book Now'",
+          "Footer with contact + map"
+        ],
+        "animations": [
+          "Hero text fades in with gold shimmer",
+          "Cards lift on hover with gold border glow",
+          "Scroll-triggered section reveals",
+          "Parallax on hero background",
+          "Floating WhatsApp button"
+        ]
+      },
+      {
+        "name": "Restaurant Page",
+        "route": "/restaurant",
+        "icon": "🍽️",
+        "sections": [
+          "Atmospheric hero (interior photo)",
+          "Our Story — about the restaurant",
+          "Signature Dishes grid (cards with price + image)",
+          "Full menu categories (Starters, Mains, Desserts)",
+          "Restaurant gallery (masonry layout)",
+          "Opening hours + location",
+          "Reserve a table CTA (WhatsApp link)"
+        ],
+        "designNotes": [
+          "Dark moody hero — candles, warm light",
+          "Dish cards: image top, name, price, description",
+          "Gold dividers between menu sections",
+          "No online ordering in V1 — informational only"
+        ]
+      },
+      {
+        "name": "Rooms & Stay Page",
+        "route": "/stay",
+        "icon": "🛏️",
+        "sections": [
+          "Hero: 'Stay With Us' — room panorama",
+          "Filters: room type, guests, price range",
+          "Room cards grid (3 per row on desktop)",
+          "Each card: image slider, name, amenities, price/night",
+          "Room detail modal / page on click",
+          "Amenities section (pool, AC, WiFi icons)",
+          "Book Now button → /checkout?type=room"
+        ],
+        "roomTypes": [
+          {
+            "name": "Standard Room",
+            "price": "₹1,200/night"
+          },
+          {
+            "name": "Deluxe Room",
+            "price": "₹2,000/night"
+          },
+          {
+            "name": "Premium Suite",
+            "price": "₹3,500/night"
+          },
+          {
+            "name": "Family Room",
+            "price": "₹2,800/night"
+          }
+        ],
+        "note": "Prices TBC with client"
+      },
+      {
+        "name": "Travel & Tours Page",
+        "route": "/travel",
+        "icon": "🏔️",
+        "sections": [
+          "Hero: mountain landscape of Uttarakhand",
+          "Featured destinations (Nainital, Jim Corbett, Kedarnath)",
+          "Tour package cards with itinerary preview",
+          "Inclusions list (meals, transport, guide)",
+          "Booking button → /checkout?type=tour",
+          "Custom tour inquiry form",
+          "Why travel with us — trust badges"
+        ],
+        "tourPackages": [
+          {
+            "name": "Nainital Weekend",
+            "duration": "2D/1N",
+            "price": "₹4,500/person"
+          },
+          {
+            "name": "Jim Corbett Safari",
+            "duration": "3D/2N",
+            "price": "₹8,000/person"
+          },
+          {
+            "name": "Kedarnath Yatra",
+            "duration": "4D/3N",
+            "price": "₹12,000/person"
+          },
+          {
+            "name": "Nainital + Bhimtal Combo",
+            "duration": "3D/2N",
+            "price": "₹6,500"
+          }
+        ],
+        "note": "Prices TBC with client"
+      },
+      {
+        "name": "Checkout & Booking Page",
+        "route": "/checkout",
+        "icon": "💳",
+        "formFields": [
+          "Full Name (required)",
+          "Mobile Number (WhatsApp)",
+          "Email Address",
+          "Booking type (auto-filled from URL)",
+          "Check-in / Check-out date picker",
+          "Number of guests",
+          "Special requests (optional textarea)",
+          "Price summary card (right panel)"
+        ],
+        "paymentSection": [
+          "Order summary with line items",
+          "Taxes calculated (GST 12%)",
+          "Total in INR clearly shown",
+          "'Pay with Razorpay' gold button",
+          "UPI logo, Visa, Mastercard badges",
+          "Security trust badge below button",
+          "Razorpay popup opens on click"
+        ]
+      },
+      {
+        "name": "Booking Confirmation Page",
+        "route": "/confirmation",
+        "icon": "✅",
+        "content": [
+          "Animated checkmark (gold)",
+          "Booking ID displayed prominently",
+          "Booking summary (dates, guests, amount)",
+          "Message: 'Email sent to your inbox'",
+          "WhatsApp chat button to owner",
+          "Return to Home CTA"
+        ],
+        "automaticTriggers": [
+          "Email to customer with booking details",
+          "Email to owner: new booking alert",
+          "WhatsApp notification to owner",
+          "Booking saved to DB with status: paid"
+        ]
+      },
+      {
+        "name": "Admin Dashboard",
+        "route": "/admin/dashboard",
+        "icon": "📊",
+        "overviewMetrics": [
+          "Total bookings this month",
+          "Total revenue this month",
+          "Pending vs confirmed count",
+          "New inquiries unread count"
+        ],
+        "quickActions": [
+          "View all bookings table",
+          "Mark booking as confirmed",
+          "View contact inquiries",
+          "Edit room/tour prices",
+          "Logout button"
+        ]
+      }
+    ]
+  },
+
+  "section7_designSystem": {
+    "title": "Design System — Colors, Fonts, Components",
+    "colorPalette": [
+      {
+        "name": "Primary Background (Deep Black)",
+        "hex": "#0D0D0D",
+        "usage": "Body background, page background"
+      },
+      {
+        "name": "Card / Section Background",
+        "hex": "#1A1A1A",
+        "usage": "Cards, sections, modals"
+      },
+      {
+        "name": "Primary Gold",
+        "hex": "#C9A84C",
+        "usage": "Buttons, accents, highlights"
+      },
+      {
+        "name": "Light Gold",
+        "hex": "#E8D5A3",
+        "usage": "Headings, highlights, secondary accents"
+      },
+      {
+        "name": "Body Text (Warm White)",
+        "hex": "#F5F5F0",
+        "usage": "Body copy, paragraphs, general text"
+      },
+      {
+        "name": "Dark Gold",
+        "hex": "#8B6914",
+        "usage": "Borders, dividers, subtle accents"
+      }
+    ],
+    "typography": [
+      {
+        "family": "Playfair Display",
+        "type": "Serif",
+        "usage": "All headings, hero text, section titles, price figures",
+        "rationale": "Royal, premium feel — matches logo script"
+      },
+      {
+        "family": "Poppins",
+        "type": "Sans-serif",
+        "usage": "Body copy, descriptions, nav links, form labels, button text",
+        "rationale": "Clean and modern, great readability on dark backgrounds"
+      }
+    ],
+    "typographyScale": {
+      "hero": "56px",
+      "h1": "40px",
+      "h2": "32px",
+      "h3": "24px",
+      "body": "16px",
+      "small": "14px",
+      "caption": "12px"
+    },
+    "buttons": [
+      {
+        "variant": "Primary — Book Now",
+        "background": "#C9A84C",
+        "color": "#0D0D0D",
+        "borderRadius": "8px",
+        "padding": "8px 16px"
+      },
+      {
+        "variant": "Secondary — Learn More",
+        "background": "transparent",
+        "color": "#C9A84C",
+        "border": "1px solid #C9A84C",
+        "borderRadius": "8px",
+        "padding": "8px 16px"
+      },
+      {
+        "variant": "Ghost — View Details",
+        "background": "#1A1A1A",
+        "color": "#E8D5A3",
+        "border": "0.5px solid rgba(201,168,76,0.3)",
+        "borderRadius": "8px",
+        "padding": "8px 16px"
+      }
+    ],
+    "cards": {
+      "background": "#1A1A1A",
+      "border": "0.5px rgba(gold, 0.25)",
+      "borderRadius": "16px",
+      "padding": "24px",
+      "hoverEffect": "translateY(-4px) + gold border glow",
+      "shadow": "0 8px 32px rgba(gold, 0.1)"
+    },
+    "animations": [
+      "Fade-in on scroll (Framer Motion)",
+      "Gold shimmer on hero headline",
+      "Card hover lift + border glow",
+      "Parallax hero background",
+      "Stagger reveal for card grids",
+      "Smooth page transitions",
+      "No heavy 3D or particles"
+    ],
+    "navbar": {
+      "position": "Fixed",
+      "background": "rgba(13,13,13,0.95) with backdrop blur",
+      "layout": "Logo left · Nav links center (Stay · Restaurant · Travel · Contact) · 'Book Now' gold CTA button right",
+      "mobile": "Hamburger menu with slide-down drawer",
+      "activeState": "Gold underline on active link"
+    }
+  },
+
+  "section8_buildRoadmap": {
+    "title": "Build Roadmap — Phase by Phase",
+    "totalPhases": 8,
+    "phases": [
+      {
+        "phase": 0,
+        "name": "Foundation",
+        "duration": "Day 1",
+        "description": "Project scaffold, design tokens, global layout. Nothing visible yet — pure setup.",
+        "tasks": [
+          "next.js init",
+          "tailwind setup",
+          "font imports",
+          "color tokens",
+          "prisma init",
+          "supabase connect",
+          ".env setup",
+          "folder structure"
+        ]
+      },
+      {
+        "phase": 1,
+        "name": "Layout Shell",
+        "duration": "Day 1–2",
+        "description": "Navbar, footer, hero section, page routing. First thing the client can see in browser.",
+        "tasks": [
+          "Navbar component",
+          "Footer component",
+          "Hero section",
+          "Page routing setup",
+          "Mobile responsive",
+          "Framer motion install"
+        ]
+      },
+      {
+        "phase": 2,
+        "name": "All 3 Service Sections",
+        "duration": "Day 2–3",
+        "description": "Restaurant, Rooms, and Tours pages fully built with dummy content and placeholder images.",
+        "tasks": [
+          "Restaurant page",
+          "Rooms page",
+          "Tours page",
+          "Card components",
+          "Image gallery",
+          "Scroll animations"
+        ]
+      },
+      {
+        "phase": 3,
+        "name": "Database & API",
+        "duration": "Day 3–4",
+        "description": "Prisma schema created, DB seeded with dummy rooms/tours, API routes built.",
+        "tasks": [
+          "Prisma schema",
+          "DB migrations",
+          "Seed data",
+          "/api/bookings POST",
+          "/api/rooms GET",
+          "/api/tours GET"
+        ]
+      },
+      {
+        "phase": 4,
+        "name": "Checkout & Razorpay",
+        "duration": "Day 4–5",
+        "description": "Full booking flow with Razorpay test mode, HMAC verification, and DB booking save.",
+        "tasks": [
+          "Checkout page",
+          "Booking form",
+          "Razorpay order API",
+          "Razorpay popup",
+          "Verify API",
+          "HMAC check",
+          "DB save"
+        ]
+      },
+      {
+        "phase": 5,
+        "name": "Notifications",
+        "duration": "Day 5",
+        "description": "Owner email alert + customer confirmation email + WhatsApp notification on every booking.",
+        "tasks": [
+          "Nodemailer setup",
+          "Email templates",
+          "Owner alert email",
+          "Customer receipt",
+          "WhatsApp link",
+          "Confirmation page"
+        ]
+      },
+      {
+        "phase": 6,
+        "name": "Admin Panel",
+        "duration": "Day 6–7",
+        "description": "NextAuth login, protected dashboard, bookings table, basic management.",
+        "tasks": [
+          "Admin login page",
+          "NextAuth setup",
+          "Middleware guard",
+          "Dashboard UI",
+          "Bookings table",
+          "Inquiry viewer"
+        ]
+      },
+      {
+        "phase": 7,
+        "name": "Polish & Deploy",
+        "duration": "Day 7–8",
+        "description": "Performance tuning, mobile testing, SEO meta tags, Vercel deployment, domain connect.",
+        "tasks": [
+          "SEO meta tags",
+          "OG images",
+          "Mobile QA",
+          "Performance audit",
+          "Vercel deploy",
+          "Domain setup",
+          "Final review"
+        ]
+      }
+    ]
+  },
+
+  "section9_risksAndDecisions": {
+    "title": "Risks & Decisions",
+    "risks": [
+      {
+        "risk": "Razorpay KYC not complete for live mode",
+        "likelihood": "High",
+        "impact": "High",
+        "mitigation": "Use test mode V1. Start KYC process immediately with client."
+      },
+      {
+        "risk": "Real photos not ready for launch",
+        "likelihood": "Medium",
+        "impact": "Medium",
+        "mitigation": "Launch with premium Unsplash stock photos, swap when client sends real ones."
+      },
+      {
+        "risk": "Final room prices not confirmed",
+        "likelihood": "Medium",
+        "impact": "Low",
+        "mitigation": "Use placeholder prices, add 'Contact for pricing' fallback CTA."
+      },
+      {
+        "risk": "Owner WhatsApp number changes",
+        "likelihood": "Low",
+        "impact": "Medium",
+        "mitigation": "Store number in .env variable — change in one place, updates everywhere."
+      },
+      {
+        "risk": "Domain not purchased yet",
+        "likelihood": "Medium",
+        "impact": "Low",
+        "mitigation": "Launch on khanbhais.vercel.app first, connect custom domain when ready."
+      },
+      {
+        "risk": "No admin to manage bookings initially",
+        "likelihood": "Medium",
+        "impact": "Medium",
+        "mitigation": "WhatsApp + email notifications are the primary system. Admin panel is a bonus."
+      }
+    ],
+    "clientConfirmations": [
+      "Final room prices",
+      "Final tour prices",
+      "Owner mobile for WhatsApp",
+      "Owner email address",
+      "Domain name preference",
+      "Real restaurant photos (V2)",
+      "Razorpay account creation"
+    ]
+  },
+
+  "buildingSequenceAndDependencies": {
+    "criticalPath": [
+      {
+        "phase": "Phase 0",
+        "blocksAll": true,
+        "reason": "Foundation must be complete before any development"
+      },
+      {
+        "phase": "Phase 1",
+        "dependsOn": ["Phase 0"],
+        "reason": "Layout shell requires foundation setup"
+      },
+      {
+        "phase": "Phase 2",
+        "dependsOn": ["Phase 1"],
+        "reason": "Service pages use navbar, footer, and routing from Phase 1"
+      },
+      {
+        "phase": "Phase 3",
+        "dependsOn": ["Phase 0", "Phase 2"],
+        "reason": "Database design ready, API serves data from Phase 2 pages"
+      },
+      {
+        "phase": "Phase 4",
+        "dependsOn": ["Phase 3"],
+        "reason": "Checkout needs working API routes and database"
+      },
+      {
+        "phase": "Phase 5",
+        "dependsOn": ["Phase 4"],
+        "reason": "Notifications trigger after successful payment"
+      },
+      {
+        "phase": "Phase 6",
+        "dependsOn": ["Phase 3"],
+        "reason": "Admin panel reads from bookings table"
+      },
+      {
+        "phase": "Phase 7",
+        "dependsOn": ["All previous phases"],
+        "reason": "Polish and deploy only after all features are complete"
+      }
+    ],
+    "parallelizableWork": [
+      {
+        "phase": "Phase 2",
+        "tasks": "Restaurant, Rooms, and Tours pages can be built in parallel by different developers"
+      },
+      {
+        "phase": "Phase 3 & 6",
+        "tasks": "Database/API (Phase 3) and Admin Panel (Phase 6) can be worked on in parallel after Phase 0"
+      }
+    ]
+  },
+
+  "tasksForEachPhase": {
+    "Phase_0": {
+      "name": "Foundation",
+      "tasks": [
+        {
+          "task": "next.js init",
+          "details": "Create Next.js 14 project with App Router",
+          "estimatedTime": "15 mins"
+        },
+        {
+          "task": "tailwind setup",
+          "details": "Install and configure Tailwind CSS with custom color tokens",
+          "estimatedTime": "10 mins"
+        },
+        {
+          "task": "font imports",
+          "details": "Import Playfair Display and Poppins from Google Fonts",
+          "estimatedTime": "5 mins"
+        },
+        {
+          "task": "color tokens",
+          "details": "Set up CSS variables for all 6 brand colors in globals.css",
+          "estimatedTime": "10 mins"
+        },
+        {
+          "task": "prisma init",
+          "details": "Initialize Prisma ORM and create schema.prisma file",
+          "estimatedTime": "10 mins"
+        },
+        {
+          "task": "supabase connect",
+          "details": "Create Supabase project and connect database URL to .env",
+          "estimatedTime": "15 mins"
+        },
+        {
+          "task": ".env setup",
+          "details": "Create .env.local with DATABASE_URL, NEXTAUTH_SECRET, Razorpay keys placeholder",
+          "estimatedTime": "5 mins"
+        },
+        {
+          "task": "folder structure",
+          "details": "Create /app, /components, /lib, /api, /styles directories with README",
+          "estimatedTime": "5 mins"
+        }
+      ]
+    },
+    "Phase_1": {
+      "name": "Layout Shell",
+      "tasks": [
+        {
+          "task": "Navbar component",
+          "details": "Create sticky navbar with logo, nav links, Book Now button, hamburger for mobile",
+          "estimatedTime": "60 mins"
+        },
+        {
+          "task": "Footer component",
+          "details": "Footer with contact, social links, copyright, map embed",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "Hero section",
+          "details": "Full-screen hero with background image, headline, CTA, parallax effect",
+          "estimatedTime": "60 mins"
+        },
+        {
+          "task": "Page routing setup",
+          "details": "Create /app/page.ts (home), /restaurant, /stay, /travel, /checkout, /confirmation, /contact directories",
+          "estimatedTime": "15 mins"
+        },
+        {
+          "task": "Mobile responsive",
+          "details": "Test all components on mobile, adjust grid/spacing/text sizes",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "Framer motion install",
+          "details": "Install Framer Motion and create motion provider in layout",
+          "estimatedTime": "10 mins"
+        }
+      ]
+    },
+    "Phase_2": {
+      "name": "All 3 Service Sections",
+      "tasks": [
+        {
+          "task": "Restaurant page",
+          "details": "Hero, Our Story, Signature Dishes grid, Menu categories, Gallery, Reserve CTA",
+          "estimatedTime": "90 mins"
+        },
+        {
+          "task": "Rooms page",
+          "details": "Hero, Filters, Room grid (3 cols), Amenities, modal/detail page",
+          "estimatedTime": "90 mins"
+        },
+        {
+          "task": "Tours page",
+          "details": "Hero, Destinations, Package cards, Itinerary preview, Inquiry form",
+          "estimatedTime": "90 mins"
+        },
+        {
+          "task": "Card components",
+          "details": "Reusable Room Card, Tour Card, Dish Card components with hover effects",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "Image gallery",
+          "details": "Masonry layout for restaurant, image sliders for rooms, gallery modal",
+          "estimatedTime": "60 mins"
+        },
+        {
+          "task": "Scroll animations",
+          "details": "Fade-in on scroll, stagger reveals, parallax effects using Framer Motion",
+          "estimatedTime": "60 mins"
+        }
+      ]
+    },
+    "Phase_3": {
+      "name": "Database & API",
+      "tasks": [
+        {
+          "task": "Prisma schema",
+          "details": "Define all 6 tables with relationships (bookings, payments, rooms, tours, admins, contact_inquiries)",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "DB migrations",
+          "details": "Run prisma migrate dev to create tables on Supabase",
+          "estimatedTime": "10 mins"
+        },
+        {
+          "task": "Seed data",
+          "details": "Create seed.ts with dummy rooms, tours, initial admin account",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "/api/bookings POST",
+          "details": "Create booking POST endpoint with Zod validation, saves to DB",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "/api/rooms GET",
+          "details": "GET endpoint returning all available rooms with filters (optional)",
+          "estimatedTime": "20 mins"
+        },
+        {
+          "task": "/api/tours GET",
+          "details": "GET endpoint returning all available tours",
+          "estimatedTime": "20 mins"
+        }
+      ]
+    },
+    "Phase_4": {
+      "name": "Checkout & Razorpay",
+      "tasks": [
+        {
+          "task": "Checkout page",
+          "details": "Form layout, date pickers, guest count, special requests textarea",
+          "estimatedTime": "60 mins"
+        },
+        {
+          "task": "Booking form",
+          "details": "React Hook Form with Zod validation, integrates with Razorpay",
+          "estimatedTime": "60 mins"
+        },
+        {
+          "task": "Razorpay order API",
+          "details": "/api/payment/create-order endpoint, returns order_id",
+          "estimatedTime": "30 mins"
+        },
+        {
+          "task": "Razorpay popup",
+          "details": "Razorpay SDK integration, popup opens on 'Pay Now' click",
+          "estimatedTime": "30 mins"
+        },
+        {
+          "task": "Verify API",
+          "details": "/api/payment/verify endpoint, receives payment details from webhook",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "HMAC check",
+          "details": "Implement HMAC-SHA256 verification of razorpay_signature",
+          "estimatedTime": "30 mins"
+        },
+        {
+          "task": "DB save",
+          "details": "Save verified booking to DB with status: paid",
+          "estimatedTime": "20 mins"
+        }
+      ]
+    },
+    "Phase_5": {
+      "name": "Notifications",
+      "tasks": [
+        {
+          "task": "Nodemailer setup",
+          "details": "Install Nodemailer, configure Gmail SMTP credentials in .env",
+          "estimatedTime": "15 mins"
+        },
+        {
+          "task": "Email templates",
+          "details": "HTML email templates for owner alert and customer receipt",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "Owner alert email",
+          "details": "Function to send booking notification to owner email",
+          "estimatedTime": "30 mins"
+        },
+        {
+          "task": "Customer receipt",
+          "details": "Function to send confirmation email to customer with booking details",
+          "estimatedTime": "30 mins"
+        },
+        {
+          "task": "WhatsApp link",
+          "details": "Generate WhatsApp message link with booking summary, clickable button",
+          "estimatedTime": "15 mins"
+        },
+        {
+          "task": "Confirmation page",
+          "details": "/confirmation page with booking ID, summary, WhatsApp & home buttons",
+          "estimatedTime": "45 mins"
+        }
+      ]
+    },
+    "Phase_6": {
+      "name": "Admin Panel",
+      "tasks": [
+        {
+          "task": "Admin login page",
+          "details": "/admin/login form with email/password, styled with brand colors",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "NextAuth setup",
+          "details": "Install NextAuth.js, configure email+password provider, JWT secret",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "Middleware guard",
+          "details": "middleware.ts to protect all /admin/* routes, redirect to login if not authenticated",
+          "estimatedTime": "30 mins"
+        },
+        {
+          "task": "Dashboard UI",
+          "details": "Overview with KPIs (bookings, revenue, pending count, unread inquiries)",
+          "estimatedTime": "60 mins"
+        },
+        {
+          "task": "Bookings table",
+          "details": "Table view of all bookings with pagination, sort, filter by status",
+          "estimatedTime": "60 mins"
+        },
+        {
+          "task": "Inquiry viewer",
+          "details": "View all contact inquiries, mark as read/unread, delete",
+          "estimatedTime": "45 mins"
+        }
+      ]
+    },
+    "Phase_7": {
+      "name": "Polish & Deploy",
+      "tasks": [
+        {
+          "task": "SEO meta tags",
+          "details": "Add title, description, keywords, og:image to each page",
+          "estimatedTime": "30 mins"
+        },
+        {
+          "task": "OG images",
+          "details": "Create dynamic OG images for social sharing using og library",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "Mobile QA",
+          "details": "Test entire site on iPhone, Android, tablet viewports. Fix layout issues",
+          "estimatedTime": "60 mins"
+        },
+        {
+          "task": "Performance audit",
+          "details": "Run Lighthouse, optimize image sizes, CSS, JS bundle size",
+          "estimatedTime": "45 mins"
+        },
+        {
+          "task": "Vercel deploy",
+          "details": "Connect repo to Vercel, deploy main branch",
+          "estimatedTime": "15 mins"
+        },
+        {
+          "task": "Domain setup",
+          "details": "Connect custom domain to Vercel project, update DNS records",
+          "estimatedTime": "15 mins"
+        },
+        {
+          "task": "Final review",
+          "details": "Full walkthrough with client, gather feedback, minor tweaks",
+          "estimatedTime": "60 mins"
+        }
+      ]
+    }
+  },
+
+  "clientConfirmationChecklist": {
+    "pricingAndProducts": [
+      {
+        "item": "Final room prices for all 4 room types",
+        "importance": "Critical",
+        "reason": "Pricing is displayed on /stay page and used in checkout calculations"
+      },
+      {
+        "item": "Final tour package prices and inclusions",
+        "importance": "Critical",
+        "reason": "Tour pricing shown on /travel page and in booking form"
+      },
+      {
+        "item": "Restaurant menu items and prices (optional for V1)",
+        "importance": "Nice to have",
+        "reason": "Restaurant page can launch informational-only; menu can be added in V2"
+      }
+    ],
+    "contactAndNotifications": [
+      {
+        "item": "Owner mobile number (for WhatsApp notifications)",
+        "importance": "Critical",
+        "reason": "Stored in .env, used for all booking alerts"
+      },
+      {
+        "item": "Owner email address (for payment notifications)",
+        "importance": "Critical",
+        "reason": "Receives booking alerts, must be checked regularly"
+      },
+      {
+        "item": "Gmail account for sending emails (Nodemailer SMTP)",
+        "importance": "Critical",
+        "reason": "Sends confirmation emails to customers and alerts to owner"
+      }
+    ],
+    "domainAndDeployment": [
+      {
+        "item": "Preferred domain name (or approve khanbhais.vercel.app for launch)",
+        "importance": "Important",
+        "reason": "Used for DNS setup and brand consistency"
+      },
+      {
+        "item": "Timezone for bookings and timestamps",
+        "importance": "Important",
+        "reason": "Dates and times stored in UTC but displayed in local timezone"
+      }
+    ],
+    "paymentAndFinancial": [
+      {
+        "item": "Razorpay account creation and API keys",
+        "importance": "Critical",
+        "reason": "Required for test mode deployment; live keys after KYC"
+      },
+      {
+        "item": "Bank account for Razorpay settlements",
+        "importance": "Important for V2",
+        "reason": "Payments settle to this account; needed before going live"
+      },
+      {
+        "item": "GST number (optional)",
+        "importance": "Nice to have",
+        "reason": "Can be shown on invoices; currently hardcoded as 12%"
+      }
+    ],
+    "content": [
+      {
+        "item": "High-quality photos for restaurant",
+        "importance": "Important",
+        "reason": "Launch with Unsplash stock photos; swap with real photos in V2"
+      },
+      {
+        "item": "High-quality photos for rooms",
+        "importance": "Important",
+        "reason": "Launch with Unsplash stock photos; swap with real photos in V2"
+      },
+      {
+        "item": "Restaurant hours of operation",
+        "importance": "Important",
+        "reason": "Displayed on /restaurant page"
+      },
+      {
+        "item": "Hotel amenities list (pool, AC, WiFi, parking, etc.)",
+        "importance": "Important",
+        "reason": "Shown on /stay page and in room detail cards"
+      },
+      {
+        "item": "Tour detailed itineraries (day-by-day plans)",
+        "importance": "Important",
+        "reason": "Displayed on /travel page and in tour detail modals"
+      }
+    ],
+    "branding": [
+      {
+        "item": "Logo file (SVG preferred)",
+        "importance": "Critical",
+        "reason": "Used in navbar and hero section"
+      },
+      {
+        "item": "Brand story / 'About Us' text",
+        "importance": "Important",
+        "reason": "Displayed on home page and restaurant page"
+      },
+      {
+        "item": "Approval of gold color scheme (#C9A84C)",
+        "importance": "Important",
+        "reason": "Primary brand color used throughout the site"
+      }
+    ]
+  },
+
+  "summaryAndMetrics": {
+    "totalBuildTime": "7-8 days (sequential)",
+    "totalTasks": 68,
+    "tasksByPhase": {
+      "Phase_0": 8,
+      "Phase_1": 6,
+      "Phase_2": 6,
+      "Phase_3": 6,
+      "Phase_4": 7,
+      "Phase_5": 6,
+      "Phase_6": 6,
+      "Phase_7": 7
+    },
+    "databaseTables": 6,
+    "databaseFields": 82,
+    "pages": 7,
+    "apiEndpoints": 8,
+    "protectedRoutes": 7,
+    "colorTokens": 6,
+    "risks": 6,
+    "clientConfirmationItems": 21
+  }
+}
