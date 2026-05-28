@@ -274,3 +274,44 @@ export async function sendOwnerWhatsAppNotice(
     console.error("[emailService] sendOwnerWhatsAppNotice failed", err);
   }
 }
+
+interface RefundLite {
+  /** Refund amount in rupees (Prisma Decimal or number). */
+  amount: { toString(): string } | number;
+  razorpayRefundId: string;
+}
+
+/**
+ * Customer email: a refund has been processed. Errors are logged, not thrown —
+ * the caller fires this fire-and-forget after the refund webhook commits.
+ */
+export async function sendRefundProcessedEmail(
+  booking: BookingLite,
+  payment: PaymentLite,
+  refund: RefundLite
+) {
+  try {
+    const amount = toNumber(refund.amount);
+    const html = `
+      <h2>Your refund has been processed</h2>
+      <p>Dear ${booking.guestName},</p>
+      <p>We have processed a refund of <strong>${formatCurrency(amount)}</strong>
+      for booking <strong>${booking.bookingRef}</strong>.</p>
+      <ul>
+        <li>Reference: <strong>${booking.bookingRef}</strong></li>
+        <li>Refund amount: <strong>${formatCurrency(amount)}</strong></li>
+        <li>Original payment: ${payment.razorpayPaymentId ?? "—"}</li>
+      </ul>
+      <p>The amount should reflect in your account within 5–7 business days,
+      depending on your bank.</p>
+      <p>Warm regards,<br/>Khan Bhai S. Team</p>
+    `;
+    await sendEmail({
+      to: booking.guestEmail,
+      subject: `[Khan Bhai] Refund processed — ${booking.bookingRef}`,
+      html,
+    });
+  } catch (err) {
+    console.error("[emailService] sendRefundProcessedEmail failed", err);
+  }
+}

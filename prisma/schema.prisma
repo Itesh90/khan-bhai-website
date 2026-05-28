@@ -22,6 +22,7 @@ enum AdminRole {
 enum BookingType {
   room
   tour
+  restaurant
 }
 
 enum BookingStatus {
@@ -35,6 +36,24 @@ enum PaymentStatus {
   CREATED
   AUTHORIZED
   CAPTURED
+  FAILED
+}
+
+enum PaymentEventKind {
+  ORDER_CREATED
+  VERIFY_ATTEMPTED
+  VERIFY_SUCCEEDED
+  VERIFY_FAILED
+  WEBHOOK_RECEIVED
+  WEBHOOK_PROCESSED
+  WEBHOOK_REJECTED
+  REFUND_INITIATED
+  REFUND_PROCESSED
+}
+
+enum RefundStatus {
+  INITIATED
+  PROCESSED
   FAILED
 }
 
@@ -134,14 +153,17 @@ model Booking {
   checkInDate     DateTime?
   checkOutDate    DateTime?
   specialRequests String?
+  diningArea      String?
+  timeSlot        String?
   status          BookingStatus @default(pending)
   totalPrice      Decimal       @db.Decimal(10, 2)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  room    Room?    @relation(fields: [roomId], references: [id], onDelete: SetNull)
-  tour    Tour?    @relation(fields: [tourId], references: [id], onDelete: SetNull)
-  payment Payment?
+  room          Room?          @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  tour          Tour?          @relation(fields: [tourId], references: [id], onDelete: SetNull)
+  payment       Payment?
+  paymentEvents PaymentEvent[]
 
   @@index([status])
   @@index([guestEmail])
@@ -170,12 +192,70 @@ model Payment {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking       Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  paymentEvents PaymentEvent[]
+  refunds       Refund[]
 
   @@index([razorpayPaymentId])
   @@index([bookingId])
   @@index([createdAt])
   @@map("payments")
+}
+
+// ─────────────────────────────────────────────
+// PaymentEvent (append-only audit log)
+// ─────────────────────────────────────────────
+
+model PaymentEvent {
+  id                String           @id @default(cuid())
+  paymentId         String?
+  bookingId         String?
+  kind              PaymentEventKind
+  /// Razorpay webhook event id (`evt_…`). Unique → event-level idempotency.
+  eventId           String?          @unique
+  /// Razorpay event name, e.g. "payment.captured".
+  razorpayEventName String?
+  /// Redacted context — secrets stripped, Razorpay ids masked before write.
+  payload           Json?
+  /// Flips to true once the state change this event drives has committed.
+  processed         Boolean          @default(false)
+  error             String?          @db.Text
+  /// Correlates with the x-request-id response header and log lines.
+  requestId         String
+  createdAt         DateTime         @default(now())
+
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([paymentId])
+  @@index([bookingId])
+  @@index([createdAt])
+  @@index([kind, createdAt])
+  @@map("payment_events")
+}
+
+// ─────────────────────────────────────────────
+// Refund
+// ─────────────────────────────────────────────
+
+model Refund {
+  id               String       @id @default(cuid())
+  paymentId        String
+  razorpayRefundId String       @unique
+  /// Refund amount in rupees (paise / 100).
+  amount           Decimal      @db.Decimal(10, 2)
+  currency         String       @default("INR")
+  status           RefundStatus @default(INITIATED)
+  reason           String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("refunds")
 }
 
 // ─────────────────────────────────────────────

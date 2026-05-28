@@ -17,6 +17,10 @@ import { logger, newRequestId } from "@/lib/logger";
  */
 export async function POST(request: NextRequest) {
   const requestId = newRequestId();
+  const pathname = request.nextUrl?.pathname ?? "";
+  if (pathname.startsWith("/api/payment/")) {
+    logger.warn("payments.legacy_route_hit", { path: pathname, requestId });
+  }
   try {
     const ip = getClientIp(request);
     const rl = checkRateLimit(

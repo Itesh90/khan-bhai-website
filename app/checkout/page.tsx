@@ -14,13 +14,13 @@ import Input from "@/components/ui/Input";
 import Reveal from "@/components/ui/Reveal";
 
 const ROOMS: Record<string, { name: string; img: string; price: number; type: "room" | "tour" | "table" }> = {
-  standard:  { name: "Standard Room",  img: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=900&q=80", price: 1200, type: "room" },
-  deluxe:    { name: "Deluxe Room",    img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80", price: 2000, type: "room" },
-  premium:   { name: "Premium Suite",  img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=900&q=80", price: 3500, type: "room" },
-  walnut:    { name: "Walnut Suite",   img: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=900&q=80", price: 5500, type: "room" },
-  nainital:  { name: "Nainital & Bhimtal", img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1200&q=80", price: 6500, type: "tour" },
-  corbett:   { name: "Jim Corbett",    img: "https://images.unsplash.com/photo-1606298855672-3efb63017be8?w=1200&q=80", price: 8000, type: "tour" },
-  kedarnath: { name: "Kedarnath Yatra", img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200&q=80", price: 12000, type: "tour" },
+  deluxe:    { name: "Deluxe Room",            img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80", price: 2730, type: "room" },
+  balcony:   { name: "Room with Balcony View", img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=900&q=80", price: 3360, type: "room" },
+  suite:     { name: "Sweet Room",             img: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=900&q=80", price: 7140, type: "room" },
+  nainital:  { name: "Nainital & Bhimtal",     img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1200&q=80", price: 6500, type: "tour" },
+  corbett:   { name: "Jim Corbett",            img: "https://images.unsplash.com/photo-1606298855672-3efb63017be8?w=1200&q=80", price: 8000, type: "tour" },
+  kedarnath: { name: "Kedarnath Yatra",        img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200&q=80", price: 12000, type: "tour" },
+  restaurant: { name: "Restaurant Table",       img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&q=80", price: 200, type: "table" },
 };
 
 function CheckoutContent() {
@@ -41,6 +41,8 @@ function CheckoutContent() {
     guests: 2,
     terms: false,
   });
+  const [diningArea, setDiningArea] = useState("Indoors");
+  const [timeSlot, setTimeSlot] = useState("7:00 PM");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string>("");
@@ -84,10 +86,14 @@ function CheckoutContent() {
     return n;
   }, [form.checkIn, form.checkOut, item.type]);
 
-  const subtotal =
-    item.type === "tour" ? item.price * form.guests : item.price * nights;
-  const gst = Math.round(subtotal * 0.18);
-  const total = subtotal + gst;
+  const rawSubtotal =
+    (item.type === "tour" || item.type === "table")
+      ? item.price * form.guests
+      : item.price * nights;
+
+  const total = item.type === "room" ? rawSubtotal : Math.round(rawSubtotal * 1.18);
+  const subtotal = item.type === "room" ? Math.round(total / 1.18) : rawSubtotal;
+  const gst = total - subtotal;
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -125,8 +131,7 @@ function CheckoutContent() {
         bookingAmount = bookingState.amount;
       } else {
         const bookingPayload = {
-          booking_type: item.type === "tour" ? "tour" : "room",
-          // The id key in our static map is also the slug; real impl would map to DB id.
+          booking_type: item.type === "tour" ? "tour" : item.type === "table" ? "restaurant" : "room",
           room_id: item.type === "room" ? id : undefined,
           tour_id: item.type === "tour" ? id : undefined,
           customer_name: form.name,
@@ -134,7 +139,9 @@ function CheckoutContent() {
           customer_phone: form.phone,
           guests: form.guests,
           check_in: form.checkIn,
-          check_out: form.checkOut,
+          check_out: item.type === "table" ? undefined : form.checkOut,
+          diningArea: item.type === "table" ? diningArea : undefined,
+          timeSlot: item.type === "table" ? timeSlot : undefined,
           special_requests: undefined,
         };
 
@@ -187,7 +194,11 @@ function CheckoutContent() {
         currency,
         name: "Khan Bhai S.",
         description:
-          item.type === "tour" ? `Tour: ${item.name}` : `Stay: ${item.name}`,
+          item.type === "tour"
+            ? `Tour: ${item.name}`
+            : item.type === "table"
+            ? `Seat Reservation: ${item.name}`
+            : `Stay: ${item.name}`,
         image: "/logo.png",
         prefill: {
           name: form.name,
@@ -299,29 +310,102 @@ function CheckoutContent() {
                   placeholder="+91 98765 43210"
                 />
 
-                <h3 style={{ fontFamily: "var(--kb-serif)", fontSize: 24, fontWeight: 400, marginTop: 24 }}>
-                  {item.type === "tour" ? "Travel" : "Stay"} <em style={{ color: "var(--kb-gold-light)", fontStyle: "italic" }}>dates</em>
+                 <h3 style={{ fontFamily: "var(--kb-serif)", fontSize: 24, fontWeight: 400, marginTop: 24 }}>
+                  {item.type === "tour" ? "Travel" : item.type === "table" ? "Dining" : "Stay"} <em style={{ color: "var(--kb-gold-light)", fontStyle: "italic" }}>details</em>
                 </h3>
                 <div className="form-row">
-                  <Input
-                    label={item.type === "tour" ? "Travel start" : "Check in"}
-                    name="checkIn"
-                    type="date"
-                    value={form.checkIn}
-                    onChange={(e) => set("checkIn", e.target.value)}
-                  />
-                  {item.type !== "tour" && (
-                    <Input
-                      label="Check out"
-                      name="checkOut"
-                      type="date"
-                      value={form.checkOut}
-                      onChange={(e) => set("checkOut", e.target.value)}
-                    />
+                  {item.type === "table" ? (
+                    <>
+                      <Input
+                        label="Dining date"
+                        name="checkIn"
+                        type="date"
+                        value={form.checkIn}
+                        onChange={(e) => set("checkIn", e.target.value)}
+                      />
+                      <div className="input-group">
+                        <label className="kb-input-label" htmlFor="timeSlot">Time slot</label>
+                        <select
+                          id="timeSlot"
+                          value={timeSlot}
+                          onChange={(e) => setTimeSlot(e.target.value)}
+                          className="kb-input"
+                          style={{
+                            width: "100%",
+                            height: 50,
+                            background: "transparent",
+                            color: "var(--kb-text)",
+                            border: "0.5px solid var(--kb-gold-dim)",
+                            padding: "0 16px",
+                            outline: "none",
+                            fontFamily: "var(--kb-sans)",
+                            fontSize: 14,
+                          }}
+                        >
+                          <option value="12:00 PM" style={{ background: "var(--kb-black)" }}>12:00 PM (Lunch)</option>
+                          <option value="1:00 PM" style={{ background: "var(--kb-black)" }}>1:00 PM (Lunch)</option>
+                          <option value="2:00 PM" style={{ background: "var(--kb-black)" }}>2:00 PM (Lunch)</option>
+                          <option value="3:00 PM" style={{ background: "var(--kb-black)" }}>3:00 PM (Lunch)</option>
+                          <option value="7:00 PM" style={{ background: "var(--kb-black)" }}>7:00 PM (Dinner)</option>
+                          <option value="8:00 PM" style={{ background: "var(--kb-black)" }}>8:00 PM (Dinner)</option>
+                          <option value="9:00 PM" style={{ background: "var(--kb-black)" }}>9:00 PM (Dinner)</option>
+                          <option value="10:00 PM" style={{ background: "var(--kb-black)" }}>10:00 PM (Dinner)</option>
+                        </select>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Input
+                        label={item.type === "tour" ? "Travel start" : "Check in"}
+                        name="checkIn"
+                        type="date"
+                        value={form.checkIn}
+                        onChange={(e) => set("checkIn", e.target.value)}
+                      />
+                      {item.type !== "tour" && (
+                        <Input
+                          label="Check out"
+                          name="checkOut"
+                          type="date"
+                          value={form.checkOut}
+                          onChange={(e) => set("checkOut", e.target.value)}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
+
+                {item.type === "table" && (
+                  <div className="form-row" style={{ marginTop: 16 }}>
+                    <div className="input-group" style={{ width: "100%" }}>
+                      <label className="kb-input-label" htmlFor="diningArea">Dining Area</label>
+                      <select
+                        id="diningArea"
+                        value={diningArea}
+                        onChange={(e) => setDiningArea(e.target.value)}
+                        className="kb-input"
+                        style={{
+                          width: "100%",
+                          height: 50,
+                          background: "transparent",
+                          color: "var(--kb-text)",
+                          border: "0.5px solid var(--kb-gold-dim)",
+                          padding: "0 16px",
+                          outline: "none",
+                          fontFamily: "var(--kb-sans)",
+                          fontSize: 14,
+                        }}
+                      >
+                        <option value="Indoors" style={{ background: "var(--kb-black)" }}>Luxury Indoors</option>
+                        <option value="Garden Lawn" style={{ background: "var(--kb-black)" }}>Garden Lawn Seating</option>
+                        <option value="Rooftop" style={{ background: "var(--kb-black)" }}>Star-lit Rooftop</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <Input
-                  label={item.type === "tour" ? "Persons" : "Guests"}
+                  label={item.type === "tour" ? "Persons" : item.type === "table" ? "Seats (Guests)" : "Guests"}
                   name="guests"
                   type="number"
                   min={1}
@@ -390,12 +474,12 @@ function CheckoutContent() {
                 <h3 style={{ marginTop: 8 }}>{item.name}</h3>
                 <div className="item-img" style={{ backgroundImage: `url(${item.img})` }} />
                 <div className="summary-line">
-                  <span>{item.type === "tour" ? "Per person" : "Per night"}</span>
+                  <span>{item.type === "tour" ? "Per person" : item.type === "table" ? "Per seat cover" : "Per night"}</span>
                   <b>₹{item.price.toLocaleString("en-IN")}</b>
                 </div>
                 <div className="summary-line">
-                  <span>{item.type === "tour" ? "Persons" : "Nights"}</span>
-                  <b>{item.type === "tour" ? form.guests : nights}</b>
+                  <span>{item.type === "tour" ? "Persons" : item.type === "table" ? "Seats" : "Nights"}</span>
+                  <b>{item.type === "tour" || item.type === "table" ? form.guests : nights}</b>
                 </div>
                 <div className="summary-line">
                   <span>Subtotal</span>

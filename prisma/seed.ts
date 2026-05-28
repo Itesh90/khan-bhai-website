@@ -66,13 +66,16 @@ async function main() {
 
   // ── 2. Rooms ─────────────────────────────────────────────────────────────────
   const standardRoom = await prisma.room.upsert({
-    where: { id: "room_standard_001" },
-    update: {},
+    where: { id: "standard" },
+    update: {
+      price: 1200,
+      available: false,
+    },
     create: {
-      id: "room_standard_001",
+      id: "standard",
       name: "Standard Room",
       description:
-        "A comfortable standard room with all essential amenities. Perfect for solo travellers or couples looking for a clean, cosy stay in the heart of Uttarakhand.",
+        "A comfortable standard room with all essential amenities. Perfect for solo travellers or couples looking for a clean, cosy stay.",
       price: 1200,
       maxGuests: 2,
       amenities: ["WiFi", "AC", "TV", "Attached Bathroom"],
@@ -80,21 +83,24 @@ async function main() {
         "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800",
         "https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=800",
       ],
-      available: true,
+      available: false,
     },
   });
 
   const deluxeRoom = await prisma.room.upsert({
-    where: { id: "room_deluxe_002" },
-    update: {},
+    where: { id: "deluxe" },
+    update: {
+      price: 2730,
+      available: true,
+    },
     create: {
-      id: "room_deluxe_002",
+      id: "deluxe",
       name: "Deluxe Room",
       description:
-        "Elegantly furnished deluxe room featuring a relaxing bathtub, mini bar, and stunning mountain views. Ideal for a romantic getaway.",
-      price: 2000,
+        "Elegantly furnished deluxe room featuring a relaxing balcony, workspace, and comfortable king bed.",
+      price: 2730,
       maxGuests: 2,
-      amenities: ["WiFi", "AC", "TV", "Bathtub", "Mini Bar"],
+      amenities: ["WiFi", "AC", "TV", "Balcony", "Workspace"],
       images: [
         "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800",
         "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800",
@@ -104,16 +110,20 @@ async function main() {
   });
 
   const premiumSuite = await prisma.room.upsert({
-    where: { id: "room_premium_003" },
-    update: {},
+    where: { id: "balcony" },
+    update: {
+      price: 3360,
+      name: "Room with Balcony View",
+      available: true,
+    },
     create: {
-      id: "room_premium_003",
-      name: "Premium Suite",
+      id: "balcony",
+      name: "Room with Balcony View",
       description:
-        "Our flagship suite with a private Jacuzzi, mini bar, and a separate living room. An unparalleled luxury experience for discerning guests.",
-      price: 3500,
-      maxGuests: 3,
-      amenities: ["WiFi", "AC", "TV", "Jacuzzi", "Mini Bar", "Living Room"],
+        "Premium room with a beautiful sit-out balcony offering stunning views of the valley.",
+      price: 3360,
+      maxGuests: 2,
+      amenities: ["WiFi", "AC", "TV", "Balcony View", "Mini Bar"],
       images: [
         "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800",
         "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800",
@@ -123,22 +133,26 @@ async function main() {
   });
 
   const familyRoom = await prisma.room.upsert({
-    where: { id: "room_family_004" },
-    update: {},
+    where: { id: "suite" },
+    update: {
+      price: 7140,
+      name: "Sweet Room",
+      available: true,
+    },
     create: {
-      id: "room_family_004",
-      name: "Family Room",
+      id: "suite",
+      name: "Sweet Room",
       description:
-        "Spacious family room with multiple beds, a kitchen corner, and a large bathroom. Designed to make family vacations truly memorable.",
-      price: 2800,
+        "Our flagship luxury suite room with fine wood finishes, private balcony, and separate lounge area.",
+      price: 7140,
       maxGuests: 4,
       amenities: [
         "WiFi",
         "AC",
         "TV",
-        "Spacious Bathroom",
-        "Kitchen Corner",
-        "Multiple Beds",
+        "Private Balcony",
+        "Lounge Area",
+        "Four-poster Bed",
       ],
       images: [
         "https://images.unsplash.com/photo-1586611292717-f828b167408c?w=800",
@@ -291,7 +305,10 @@ async function main() {
   // Booking 1: Past room booking — PAID
   const paidBooking = await prisma.booking.upsert({
     where: { bookingRef: "KB-SEED-PAID-001" },
-    update: {},
+    update: {
+      roomId: deluxeRoom.id,
+      totalPrice: 5460,
+    },
     create: {
       bookingRef: "KB-SEED-PAID-001",
       type: "room",
@@ -304,18 +321,21 @@ async function main() {
       checkOutDate: daysAgo(12),
       specialRequests: "Late check-in expected around 10 PM.",
       status: "paid",
-      totalPrice: 4000, // 2 nights × ₹2,000
+      totalPrice: 5460, // 2 nights × ₹2,730
     },
   });
 
   // Booking 2: Upcoming room booking — PENDING
   const pendingBooking = await prisma.booking.upsert({
     where: { bookingRef: "KB-SEED-PEND-002" },
-    update: {},
+    update: {
+      roomId: deluxeRoom.id,
+      totalPrice: 8190,
+    },
     create: {
       bookingRef: "KB-SEED-PEND-002",
       type: "room",
-      roomId: standardRoom.id,
+      roomId: deluxeRoom.id,
       guestName: "Priya Mehta",
       guestEmail: "priya.mehta@yahoo.co.in",
       guestPhone: "9123456789",
@@ -324,7 +344,7 @@ async function main() {
       checkOutDate: daysFromNow(13),
       specialRequests: "Non-smoking room preferred.",
       status: "pending",
-      totalPrice: 3600, // 3 nights × ₹1,200
+      totalPrice: 8190, // 3 nights × ₹2,730
     },
   });
 

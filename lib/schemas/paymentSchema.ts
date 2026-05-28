@@ -9,7 +9,11 @@ export const createOrderSchema = z.object({
     .number()
     .positive("amount must be > 0")
     .max(10_000_000, "amount exceeds maximum"),
-  currency: z.string().length(3).default("INR"),
+  currency: z
+    .string()
+    .length(3)
+    .default("INR")
+    .refine((c) => c.toUpperCase() === "INR", "Only INR payments are supported"),
   receipt: z.string().max(40).optional(),
   customer_name: z.string().max(120).optional(),
   customer_email: z.string().email().max(255).optional(),
@@ -37,3 +41,21 @@ export const verifyPaymentSchema = z.object({
   booking_id: z.string().min(1).max(64),
 });
 export type VerifyPaymentInput = z.infer<typeof verifyPaymentSchema>;
+
+/** Body for POST /api/admin/payments/[id]/refund */
+export const refundSchema = z.object({
+  // Optional partial-refund amount in whole rupees. Omit to refund the full
+  // remaining (available) amount.
+  amount: z
+    .number()
+    .positive("amount must be > 0")
+    .max(10_000_000, "amount exceeds maximum")
+    .optional(),
+  reason: z.string().trim().max(512).optional(),
+  currency: z
+    .string()
+    .length(3)
+    .default("INR")
+    .refine((c) => c.toUpperCase() === "INR", "Only INR refunds are supported"),
+});
+export type RefundInput = z.infer<typeof refundSchema>;

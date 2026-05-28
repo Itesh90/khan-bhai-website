@@ -20,6 +20,12 @@ const bookingInclude = {
   payment: true,
 } satisfies Prisma.BookingInclude;
 
+const RESTAURANT_CAPACITIES: Record<string, number> = {
+  "Luxury Indoors": 40,
+  "Garden Lawn": 60,
+  "Rooftop": 30,
+};
+
 /**
  * Build the Prisma `where` clause for booking listings.
  */
@@ -161,6 +167,41 @@ export async function createBooking(input: CreateBookingInput) {
       }
       totalPrice = Number(room.price) * nights;
       roomId = room.id;
+    } else if (input.booking_type === "restaurant") {
+      const diningArea = input.diningArea || "Luxury Indoors";
+      const timeSlot = input.timeSlot || "";
+      const checkIn = input.check_in!;
+
+      const startOfDay = new Date(checkIn);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const endOfDay = new Date(checkIn);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+
+      const bookings = await tx.booking.findMany({
+        where: {
+          type: "restaurant",
+          diningArea,
+          timeSlot,
+          checkInDate: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+          status: { in: ["pending", "paid", "confirmed"] },
+        },
+        select: { numberOfGuests: true },
+      });
+
+      const reserved = bookings.reduce((sum, b) => sum + b.numberOfGuests, 0);
+      const capacity = RESTAURANT_CAPACITIES[diningArea] ?? 40;
+
+      if (reserved + input.guests > capacity) {
+        throw new ConflictError(
+          `Only ${capacity - reserved} seats are available in ${diningArea} for ${timeSlot}`
+        );
+      }
+
+      totalPrice = 200 * input.guests;
+      checkInDate = checkIn;
     } else {
       const tour = await tx.tour.findUnique({
         where: { id: input.tour_id! },
@@ -202,6 +243,8 @@ export async function createBooking(input: CreateBookingInput) {
         numberOfGuests: input.guests,
         checkInDate,
         checkOutDate,
+        diningArea: input.diningArea,
+        timeSlot: input.timeSlot,
         specialRequests: input.special_requests,
         status: "pending",
         totalPrice,
@@ -300,4 +343,38 @@ export async function cancelBooking(id: string) {
     logger.info("booking.cancelled", { bookingId: id });
     return updated;
   });
+}
+
+/**
+ * Get seat availability for a specific dining area and time slot on a given date.
+ */
+export async function getRestaurantAvailability(
+  date: Date,
+  diningArea: string,
+  timeSlot: string
+): Promise<{ capacity: number; reserved: number; available: number }> {
+  const startOfDay = new Date(date);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  const endOfDay = new Date(date);
+  endOfDay.setUTCHours(23, 59, 59, 999);
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      type: "restaurant",
+      diningArea,
+      timeSlot,
+      checkInDate: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+      status: { in: ["pending", "paid", "confirmed"] },
+    },
+    select: { numberOfGuests: true },
+  });
+
+  const reserved = bookings.reduce((sum, b) => sum + b.numberOfGuests, 0);
+  const capacity = RESTAURANT_CAPACITIES[diningArea] ?? 40;
+  const available = Math.max(0, capacity - reserved);
+
+  return { capacity, reserved, available };
 }

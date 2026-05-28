@@ -29,8 +29,8 @@ export default function Footer() {
             <h5>Plan</h5>
             <ul>
               <li><Link href="/checkout">Reservations</Link></li>
-              <li><Link href="#">Group Bookings</Link></li>
-              <li><Link href="#">Events &amp; Weddings</Link></li>
+              <li><Link href="/banquet#inquire">Group Bookings</Link></li>
+              <li><Link href="/banquet">Events &amp; Weddings</Link></li>
               <li><Link href="#">Cancellation Policy</Link></li>
               <li><Link href="#">Privacy</Link></li>
             </ul>

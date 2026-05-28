@@ -15,6 +15,8 @@
  */
 /* eslint-disable no-console */
 
+import { redactPayload } from "@/lib/payments/redact";
+
 export type LogLevel = "debug" | "info" | "warn" | "error";
 
 const LEVEL_RANK: Record<LogLevel, number> = {
@@ -30,51 +32,12 @@ const ENV_LEVEL: LogLevel =
 
 const IS_PROD = process.env.NODE_ENV === "production";
 
-const SENSITIVE_KEYS = new Set([
-  "password",
-  "passwordHash",
-  "token",
-  "authorization",
-  "cookie",
-  "secret",
-  "signature",
-  "razorpay_signature",
-  "razorpaySignature",
-  "razorpay_key_secret",
-  "RAZORPAY_KEY_SECRET",
-  "RAZORPAY_WEBHOOK_SECRET",
-  "NEXTAUTH_SECRET",
-  "EMAIL_PASSWORD",
-  "WHATSAPP_API_TOKEN",
-  "x-razorpay-signature",
-]);
-
-/** Shallow-redact known sensitive keys from a context object. */
+/**
+ * Redact a log context using the shared payment redaction policy. Errors keep
+ * their stack only outside production; Razorpay ids are masked to prefix_***last4.
+ */
 function redact(obj: unknown): unknown {
-  if (!obj || typeof obj !== "object") return obj;
-  if (Array.isArray(obj)) return obj.map(redact);
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-    if (SENSITIVE_KEYS.has(k)) {
-      out[k] = "[REDACTED]";
-      continue;
-    }
-    if (v instanceof Error) {
-      out[k] = {
-        name: v.name,
-        message: v.message,
-        // Stack only in non-prod to avoid leaking source paths in shipped logs.
-        stack: IS_PROD ? undefined : v.stack,
-      };
-      continue;
-    }
-    if (v && typeof v === "object") {
-      out[k] = redact(v);
-      continue;
-    }
-    out[k] = v;
-  }
-  return out;
+  return redactPayload(obj, { includeErrorStack: !IS_PROD });
 }
 
 interface LogEntry {

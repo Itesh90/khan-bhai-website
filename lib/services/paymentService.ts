@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/client";
 import {
   createRazorpayOrder,
+  createRazorpayRefund,
   fetchRazorpayPayment,
   verifyRazorpaySignature,
   verifyRazorpayWebhookSignature,
@@ -12,6 +13,7 @@ import {
   sendAdminPaymentNotification,
   sendPaymentFailedNotification,
   sendOwnerWhatsAppNotice,
+  sendRefundProcessedEmail,
 } from "@/lib/services/emailService";
 import {
   NotFoundError,
@@ -19,7 +21,12 @@ import {
   ConflictError,
 } from "@/lib/errors";
 import { logger } from "@/lib/logger";
-import type { RazorpayWebhookEvent } from "@/types/payment";
+import {
+  PAYMENT_TRANSITIONS,
+  canTransitionPayment,
+} from "@/lib/payments/stateMachine";
+import { recordPaymentEvent } from "@/lib/payments/auditLog";
+import type { WebhookEnvelope } from "@/lib/payments/webhookSchema";
 import type { Booking, Payment } from "@prisma/client";
 
 /**
@@ -37,29 +44,11 @@ import type { Booking, Payment } from "@prisma/client";
  */
 
 // ─────────────────────────────────────────────
-// State machine
+// State machine — centralised in lib/payments/stateMachine.ts. Re-exported
+// here so existing imports of the payment transition helpers keep working.
 // ─────────────────────────────────────────────
 
-/**
- * Allowed Payment.status transitions. Keys are the *current* status; values
- * are the set of valid next statuses.
- *
- * CREATED → AUTHORIZED | CAPTURED | FAILED
- * AUTHORIZED → CAPTURED | FAILED
- * CAPTURED → (terminal — refunds modeled separately via refund webhook)
- * FAILED → (terminal — a new attempt requires a new order)
- */
-const PAYMENT_TRANSITIONS: Record<string, ReadonlySet<string>> = {
-  CREATED: new Set(["AUTHORIZED", "CAPTURED", "FAILED"]),
-  AUTHORIZED: new Set(["CAPTURED", "FAILED"]),
-  CAPTURED: new Set([]),
-  FAILED: new Set([]),
-};
-
-function canTransitionPayment(from: string, to: string): boolean {
-  if (from === to) return true; // idempotent no-op
-  return PAYMENT_TRANSITIONS[from]?.has(to) ?? false;
-}
+export { PAYMENT_TRANSITIONS, canTransitionPayment };
 
 // ─────────────────────────────────────────────
 // Order creation
@@ -145,26 +134,46 @@ export async function createOrderForBooking(params: {
 
   // Persist Payment row. Upsert so we cleanly handle a retry from a stale
   // CREATED row. Never reachable for CAPTURED/AUTHORIZED — guarded above.
-  const payment = await prisma.payment.upsert({
-    where: { bookingId: booking.id },
-    update: {
-      amount: totalPrice,
-      currency,
-      paymentMethod: "razorpay",
-      razorpayOrderId: order.id,
-      razorpayPaymentId: null,
-      razorpaySignature: null,
-      status: "CREATED",
-      method: null,
-    },
-    create: {
+  // The Payment write and the ORDER_CREATED audit row commit atomically.
+  const payment = await prisma.$transaction(async (tx) => {
+    const p = await tx.payment.upsert({
+      where: { bookingId: booking.id },
+      update: {
+        amount: totalPrice,
+        currency,
+        paymentMethod: "razorpay",
+        razorpayOrderId: order.id,
+        razorpayPaymentId: null,
+        razorpaySignature: null,
+        status: "CREATED",
+        method: null,
+      },
+      create: {
+        bookingId: booking.id,
+        amount: totalPrice,
+        currency,
+        paymentMethod: "razorpay",
+        razorpayOrderId: order.id,
+        status: "CREATED",
+      },
+    });
+
+    await recordPaymentEvent({
+      kind: "ORDER_CREATED",
+      paymentId: p.id,
       bookingId: booking.id,
-      amount: totalPrice,
-      currency,
-      paymentMethod: "razorpay",
-      razorpayOrderId: order.id,
-      status: "CREATED",
-    },
+      payload: {
+        orderId: order.id,
+        amountPaise: Number(order.amount),
+        currency: order.currency,
+        receipt,
+      },
+      processed: true,
+      requestId: params.requestId ?? "",
+      tx,
+    });
+
+    return p;
   });
 
   logger.info("payments.create.ok", {
@@ -292,7 +301,22 @@ export async function confirmPayment(params: {
       }
     }
   } catch (err) {
-    if (err instanceof ValidationError) throw err;
+    if (err instanceof ValidationError) {
+      // Cross-check rejected (order/amount mismatch) — record and propagate.
+      await recordPaymentEvent({
+        kind: "VERIFY_FAILED",
+        paymentId: booking.payment?.id ?? null,
+        bookingId: booking.id,
+        payload: {
+          orderId: params.razorpayOrderId,
+          paymentId: params.razorpayPaymentId,
+        },
+        processed: true,
+        error: err.message,
+        requestId: params.requestId ?? "",
+      });
+      throw err;
+    }
     // Soft-fail on Razorpay fetch errors; we have a valid signature already.
     logger.warn("payments.verify.fetch_failed", {
       requestId: params.requestId,
@@ -311,6 +335,11 @@ export async function confirmPayment(params: {
   // Run the state-machine guard + write in a single transaction so
   // concurrent webhook + verify can't both flip the same flag.
   const result = await prisma.$transaction(async (tx) => {
+    // Defence-of-last-resort: take a row lock on this booking's payment so a
+    // concurrent webhook for the same order serialises behind us. The fast-path
+    // idempotency check above still handles the common already-captured case.
+    await tx.$queryRaw`SELECT id FROM payments WHERE "bookingId" = ${booking.id} FOR UPDATE`;
+
     const current = await tx.payment.findUnique({
       where: { bookingId: booking.id },
     });
@@ -353,10 +382,31 @@ export async function confirmPayment(params: {
       });
     }
 
+    await recordPaymentEvent({
+      kind: finalStatus === "FAILED" ? "VERIFY_FAILED" : "VERIFY_SUCCEEDED",
+      paymentId: payment.id,
+      bookingId: booking.id,
+      payload: {
+        orderId: params.razorpayOrderId,
+        paymentId: params.razorpayPaymentId,
+        fromStatus,
+        finalStatus,
+        rzpStatus,
+      },
+      processed: true,
+      error: finalStatus === "FAILED" ? "payment_not_captured" : null,
+      requestId: params.requestId ?? "",
+      tx,
+    });
+
     return {
       payment,
       booking: updatedBooking,
       transitioned: !wasAlreadyTerminal && finalStatus === "CAPTURED",
+      // True only when THIS call moved a non-terminal payment into FAILED, so the
+      // failure notification fires exactly once (mirrors `transitioned` for the
+      // capture path). A verify retry against an already-FAILED row is inert.
+      freshlyFailed: !wasAlreadyTerminal && finalStatus === "FAILED",
       finalStatus,
     };
   });
@@ -408,7 +458,7 @@ export async function confirmPayment(params: {
           error: err instanceof Error ? err.message : String(err),
         })
     );
-  } else if (result.finalStatus === "FAILED") {
+  } else if (result.freshlyFailed) {
     void sendPaymentFailedNotification(
       result.booking as any,
       "Payment was not captured by Razorpay"
@@ -429,31 +479,158 @@ export async function confirmPayment(params: {
 }
 
 // ─────────────────────────────────────────────
+// Refund initiation (admin)
+// ─────────────────────────────────────────────
+
+/**
+ * Initiate a full or partial refund against a captured payment.
+ *
+ * Guards:
+ *   - Payment must be CAPTURED (else ConflictError 409).
+ *   - Requested amount may not exceed the available balance
+ *     (captured paise − already-refunded paise) (else ValidationError 400).
+ *
+ * Persists a Refund(INITIATED) row + REFUND_INITIATED audit event in one
+ * transaction. Booking status is NOT changed (refund and cancel are separate
+ * admin actions). The refund completes asynchronously via the refund webhook.
+ */
+export async function initiateRefund(
+  paymentId: string,
+  input: { amount?: number; reason?: string; currency?: string },
+  ctx?: { requestId?: string }
+) {
+  const requestId = ctx?.requestId;
+
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: { refunds: true, booking: true },
+  });
+  if (!payment) throw new NotFoundError("Payment not found");
+  if (payment.status !== "CAPTURED") {
+    throw new ConflictError("Only captured payments can be refunded");
+  }
+  if (!payment.razorpayPaymentId) {
+    throw new ValidationError("Payment has no Razorpay payment id to refund");
+  }
+
+  const capturedPaise = Math.round(Number(payment.amount.toString()) * 100);
+  // Reserve against anything not explicitly failed to avoid over-refunding.
+  const reservedPaise = payment.refunds
+    .filter((r) => r.status !== "FAILED")
+    .reduce((sum, r) => sum + Math.round(Number(r.amount.toString()) * 100), 0);
+  const availablePaise = capturedPaise - reservedPaise;
+
+  if (availablePaise <= 0) {
+    throw new ConflictError("Payment is already fully refunded");
+  }
+
+  const requestedPaise =
+    input.amount !== undefined
+      ? Math.round(input.amount * 100)
+      : availablePaise;
+
+  if (requestedPaise <= 0) {
+    throw new ValidationError("Refund amount must be greater than zero");
+  }
+  if (requestedPaise > availablePaise) {
+    throw new ValidationError(
+      "Refund amount exceeds the available balance for this payment"
+    );
+  }
+
+  // Call Razorpay first; only persist once the gateway accepts the refund.
+  const rzpRefund = await createRazorpayRefund(
+    payment.razorpayPaymentId,
+    requestedPaise,
+    {
+      reason: (input.reason ?? "").slice(0, 200),
+      requestId: requestId ?? "",
+    }
+  );
+
+  if (!rzpRefund?.id || !rzpRefund.id.startsWith("rfnd_")) {
+    logger.error("payments.refund.invalid_response", { requestId, paymentId });
+    throw new ValidationError("Payment provider returned an invalid refund");
+  }
+
+  const refund = await prisma.$transaction(async (tx) => {
+    const created = await tx.refund.create({
+      data: {
+        paymentId: payment.id,
+        razorpayRefundId: rzpRefund.id,
+        amount: requestedPaise / 100,
+        currency: "INR",
+        status: "INITIATED",
+        reason: input.reason ?? null,
+      },
+    });
+    await recordPaymentEvent({
+      kind: "REFUND_INITIATED",
+      paymentId: payment.id,
+      bookingId: payment.bookingId,
+      payload: {
+        refundId: rzpRefund.id,
+        amountPaise: requestedPaise,
+        reason: input.reason ?? null,
+      },
+      processed: true,
+      requestId: requestId ?? "",
+      tx,
+    });
+    return created;
+  });
+
+  logger.info("payments.refund.initiated", {
+    requestId,
+    paymentId,
+    refundId: redactId(rzpRefund.id),
+    amountPaise: requestedPaise,
+  });
+
+  return refund;
+}
+
+// ─────────────────────────────────────────────
 // Webhook
 // ─────────────────────────────────────────────
 
 /**
  * Handle a webhook event from Razorpay.
- * The caller MUST have verified the signature already.
+ * The caller MUST have verified the signature AND validated the envelope shape
+ * with `webhookEnvelopeSchema` already.
  *
  * Supported events:
  *   - payment.authorized → mark payment AUTHORIZED
  *   - payment.captured   → mark payment CAPTURED + booking paid
  *   - payment.failed     → mark payment FAILED (only from non-terminal states)
  *   - order.paid         → mark payment CAPTURED + booking paid
- *   - refund.processed   → audit-log only (refund flow not yet wired)
+ *   - refund.processed / refund.failed → handled by applyRefundEvent
+ *
+ * Audit: writes WEBHOOK_PROCESSED (and flips the WEBHOOK_RECEIVED row written by
+ * the route) inside the same transaction as the state change, and WEBHOOK_REJECTED
+ * for illegal transitions / unknown orders.
  *
  * Returns `{ ok, action }` where `action` indicates what the handler did.
  */
 export async function handleWebhook(
-  event: RazorpayWebhookEvent,
-  ctx?: { requestId?: string }
+  event: WebhookEnvelope,
+  ctx?: { requestId?: string; eventId?: string | null }
 ) {
   const eventType = event.event;
   const paymentEntity = event.payload?.payment?.entity;
   const orderEntity = event.payload?.order?.entity;
 
   const requestId = ctx?.requestId;
+  const eventId = ctx?.eventId ?? null;
+
+  // Refunds follow a separate lifecycle (Refund table, no booking change).
+  if (
+    eventType === "refund.processed" ||
+    eventType === "refund.failed" ||
+    eventType === "refund.created"
+  ) {
+    return applyRefundEvent(event, { requestId, eventId });
+  }
 
   if (!paymentEntity && !orderEntity) {
     logger.warn("webhook.missing_entity", { requestId, eventType });
@@ -483,6 +660,14 @@ export async function handleWebhook(
       eventType,
       orderId: redactId(orderId),
     });
+    await recordPaymentEvent({
+      kind: "WEBHOOK_REJECTED",
+      razorpayEventName: eventType,
+      payload: { orderId },
+      processed: true,
+      error: "unknown_order",
+      requestId: requestId ?? "",
+    });
     // Return ok so Razorpay does not retry forever; we log for triage.
     return { ok: true, action: "ignored:unknown_order" as const };
   }
@@ -503,19 +688,6 @@ export async function handleWebhook(
     return { ok: true, action: "idempotent:already_captured" as const };
   }
 
-  // Disallow status downgrades. Once CAPTURED, payment.failed cannot pull us
-  // back to FAILED (Razorpay never legitimately does this, but defense in
-  // depth).
-  if (payment.status === "CAPTURED" && eventType === "payment.failed") {
-    logger.warn("webhook.illegal_downgrade", {
-      requestId,
-      eventType,
-      orderId: redactId(orderId),
-      currentStatus: payment.status,
-    });
-    return { ok: true, action: "rejected:illegal_downgrade" as const };
-  }
-
   // Map event → target status.
   let targetStatus: "AUTHORIZED" | "CAPTURED" | "FAILED" | null = null;
   switch (eventType) {
@@ -529,15 +701,6 @@ export async function handleWebhook(
     case "payment.failed":
       targetStatus = "FAILED";
       break;
-    case "refund.processed":
-    case "refund.created":
-      logger.info("webhook.refund_event", {
-        requestId,
-        eventType,
-        orderId: redactId(orderId),
-      });
-      // We don't yet model refunds in DB; log + ack.
-      return { ok: true, action: "logged:refund" as const };
     default:
       logger.info("webhook.unhandled_event", { requestId, eventType });
       return { ok: true, action: "ignored:unhandled" as const };
@@ -551,24 +714,41 @@ export async function handleWebhook(
       from: payment.status,
       to: targetStatus,
     });
+    await recordPaymentEvent({
+      kind: "WEBHOOK_REJECTED",
+      paymentId: payment.id,
+      bookingId: payment.bookingId,
+      razorpayEventName: eventType,
+      payload: { orderId, from: payment.status, to: targetStatus },
+      processed: true,
+      error: "illegal_transition",
+      requestId: requestId ?? "",
+    });
     return { ok: true, action: "rejected:illegal_transition" as const };
   }
 
   // Apply the transition transactionally.
   let didCapture = false;
+  let didFail = false;
+  let raceAlreadyCaptured = false;
   await prisma.$transaction(async (tx) => {
+    // Take a row lock so a concurrent /verify for the same order serialises
+    // behind us — only one of us performs the capture + notifications.
+    await tx.$queryRaw`SELECT id FROM payments WHERE "razorpayOrderId" = ${orderId} FOR UPDATE`;
+
     // Re-read inside the transaction to avoid TOCTOU with /verify.
     const current = await tx.payment.findUnique({
       where: { id: payment.id },
     });
     if (!current) return;
+
     if (
       current.status === "CAPTURED" &&
       (targetStatus === "FAILED" || targetStatus === "AUTHORIZED")
     ) {
-      return;
-    }
-    if (current.status === targetStatus) {
+      // Capture won the race between our pre-check and the lock.
+      raceAlreadyCaptured = true;
+    } else if (current.status === targetStatus) {
       // Possible if /verify just flipped us. Update payment id if missing.
       if (!current.razorpayPaymentId && incomingPaymentId) {
         await tx.payment.update({
@@ -576,29 +756,46 @@ export async function handleWebhook(
           data: { razorpayPaymentId: incomingPaymentId },
         });
       }
-      return;
-    }
-
-    await tx.payment.update({
-      where: { id: current.id },
-      data: {
-        status: targetStatus!,
-        razorpayPaymentId:
-          incomingPaymentId ?? current.razorpayPaymentId ?? null,
-        method: paymentEntity?.method ?? current.method ?? null,
-      },
-    });
-
-    if (
-      targetStatus === "CAPTURED" &&
-      payment.booking?.status === "pending"
-    ) {
-      await tx.booking.update({
-        where: { id: payment.bookingId },
-        data: { status: "paid" },
+      if (targetStatus === "CAPTURED") raceAlreadyCaptured = true;
+    } else {
+      await tx.payment.update({
+        where: { id: current.id },
+        data: {
+          status: targetStatus!,
+          razorpayPaymentId:
+            incomingPaymentId ?? current.razorpayPaymentId ?? null,
+          method: paymentEntity?.method ?? current.method ?? null,
+        },
       });
-      didCapture = true;
+
+      if (targetStatus === "CAPTURED" && payment.booking?.status === "pending") {
+        await tx.booking.update({
+          where: { id: payment.bookingId },
+          data: { status: "paid" },
+        });
+        didCapture = true;
+      }
+      if (targetStatus === "FAILED") didFail = true;
     }
+
+    // Flip the WEBHOOK_RECEIVED row (written by the route) to processed=true and
+    // append the WEBHOOK_PROCESSED audit row — atomic with the state change.
+    if (eventId) {
+      await tx.paymentEvent.updateMany({
+        where: { eventId, kind: "WEBHOOK_RECEIVED" },
+        data: { processed: true },
+      });
+    }
+    await recordPaymentEvent({
+      kind: "WEBHOOK_PROCESSED",
+      paymentId: payment.id,
+      bookingId: payment.bookingId,
+      razorpayEventName: eventType,
+      payload: { orderId, paymentId: incomingPaymentId, targetStatus },
+      processed: true,
+      requestId: requestId ?? "",
+      tx,
+    });
   });
 
   // Fire notifications only when WE were the call that captured.
@@ -643,7 +840,8 @@ export async function handleWebhook(
     }
   }
 
-  if (targetStatus === "FAILED" && payment.booking) {
+  // Fire the failure email only when WE actually transitioned to FAILED.
+  if (didFail && payment.booking) {
     void sendPaymentFailedNotification(
       payment.booking as any,
       paymentEntity?.error_description || "Payment failed at the gateway"
@@ -656,7 +854,145 @@ export async function handleWebhook(
     );
   }
 
+  // We lost the race to a concurrent capture (verify or another webhook).
+  if (raceAlreadyCaptured && !didCapture) {
+    return { ok: true, action: "idempotent:already_captured" as const };
+  }
+
   return { ok: true, action: `applied:${targetStatus}` as const };
+}
+
+// ─────────────────────────────────────────────
+// Refund webhook branch (refund.processed / refund.failed)
+// ─────────────────────────────────────────────
+
+/**
+ * Handle a refund webhook. Updates the Refund row's lifecycle (INITIATED →
+ * PROCESSED | FAILED), records an audit event, and — exactly once on
+ * INITIATED → PROCESSED — emails the customer. Booking status is never touched.
+ */
+async function applyRefundEvent(
+  event: WebhookEnvelope,
+  ctx: { requestId?: string; eventId?: string | null }
+) {
+  const eventType = event.event;
+  const requestId = ctx?.requestId;
+  const eventId = ctx?.eventId ?? null;
+  const refundEntity = event.payload?.refund?.entity;
+
+  if (!refundEntity?.id) {
+    logger.warn("webhook.refund_missing_entity", { requestId, eventType });
+    return { ok: true, action: "ignored:no_refund_entity" as const };
+  }
+
+  const refund = await prisma.refund.findUnique({
+    where: { razorpayRefundId: refundEntity.id },
+    include: { payment: { include: { booking: true } } },
+  });
+  if (!refund) {
+    logger.warn("webhook.refund_unknown", {
+      requestId,
+      eventType,
+      refundId: redactId(refundEntity.id),
+    });
+    await recordPaymentEvent({
+      kind: "WEBHOOK_REJECTED",
+      razorpayEventName: eventType,
+      payload: { refundId: refundEntity.id },
+      processed: true,
+      error: "unknown_refund",
+      requestId: requestId ?? "",
+    });
+    return { ok: true, action: "ignored:unknown_refund" as const };
+  }
+
+  // refund.failed → mark FAILED (only from INITIATED), audit, no email.
+  if (eventType === "refund.failed") {
+    let transitioned = false;
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.refund.findUnique({ where: { id: refund.id } });
+      if (!current || current.status !== "INITIATED") return;
+      await tx.refund.update({
+        where: { id: refund.id },
+        data: { status: "FAILED" },
+      });
+      if (eventId) {
+        await tx.paymentEvent.updateMany({
+          where: { eventId, kind: "WEBHOOK_RECEIVED" },
+          data: { processed: true },
+        });
+      }
+      await recordPaymentEvent({
+        kind: "WEBHOOK_PROCESSED",
+        paymentId: refund.paymentId,
+        bookingId: refund.payment?.bookingId ?? null,
+        razorpayEventName: eventType,
+        payload: { refundId: refundEntity.id },
+        processed: true,
+        error: refundEntity.error_description ?? "refund_failed",
+        requestId: requestId ?? "",
+        tx,
+      });
+      transitioned = true;
+    });
+    return {
+      ok: true,
+      action: transitioned
+        ? ("applied:refund_failed" as const)
+        : ("idempotent:refund_unchanged" as const),
+    };
+  }
+
+  // refund.processed / refund.created → mark PROCESSED (only from INITIATED),
+  // audit, and email the customer exactly once.
+  let transitioned = false;
+  await prisma.$transaction(async (tx) => {
+    const current = await tx.refund.findUnique({ where: { id: refund.id } });
+    if (!current || current.status !== "INITIATED") return;
+    await tx.refund.update({
+      where: { id: refund.id },
+      data: { status: "PROCESSED" },
+    });
+    if (eventId) {
+      await tx.paymentEvent.updateMany({
+        where: { eventId, kind: "WEBHOOK_RECEIVED" },
+        data: { processed: true },
+      });
+    }
+    await recordPaymentEvent({
+      kind: "REFUND_PROCESSED",
+      paymentId: refund.paymentId,
+      bookingId: refund.payment?.bookingId ?? null,
+      razorpayEventName: eventType,
+      payload: { refundId: refundEntity.id, amountPaise: refundEntity.amount },
+      processed: true,
+      requestId: requestId ?? "",
+      tx,
+    });
+    transitioned = true;
+  });
+
+  // Email exactly once — only the call that flipped INITIATED → PROCESSED.
+  if (transitioned && refund.payment?.booking) {
+    void sendRefundProcessedEmail(
+      refund.payment.booking as any,
+      refund.payment as any,
+      { amount: refund.amount, razorpayRefundId: refund.razorpayRefundId }
+    ).catch((err) =>
+      logger.error("notifications.refund_processed_failed", {
+        requestId,
+        refundId: redactId(refund.razorpayRefundId),
+        error: err instanceof Error ? err.message : String(err),
+      })
+    );
+  }
+
+  return {
+    ok: true,
+    action: transitioned
+      ? ("applied:refund_processed" as const)
+      : ("idempotent:refund_unchanged" as const),
+  };
 }
 
 export { verifyRazorpayWebhookSignature };

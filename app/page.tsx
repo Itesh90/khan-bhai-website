@@ -7,21 +7,21 @@ import Ornament from "@/components/ui/Ornament";
 const PILLARS = [
   {
     num: "No. 01",
-    img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80",
+    img: "/images/stay/room-suite.jpg",
     name: "Stay",
     lede:
-      "Twenty-eight rooms across four categories — each finished in walnut, brass and hand-loomed Kumaoni textiles.",
+      "Twenty-eight rooms across three categories — each finished in walnut, brass and hand-loomed Kumaoni textiles.",
     list: [
-      ["Standard", "₹1,200"],
-      ["Deluxe", "₹2,000"],
-      ["Premium Suite", "₹3,500"],
+      ["Deluxe Room", "₹2,730"],
+      ["Balcony View Room", "₹3,360"],
+      ["Sweet Room", "₹7,140"],
     ] as [string, string][],
     cta: "Browse Rooms",
     href: "/stay",
   },
   {
     num: "No. 02",
-    img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80",
+    img: "/images/restaurant/dining-hall-1.jpg",
     name: "Kitchen",
     lede:
       "Awadhi slow-cooking and Kumaoni mountain kitchen. Tandoor breads from a clay oven seasoned by three decades of fire.",
@@ -49,11 +49,13 @@ const PILLARS = [
   },
 ];
 
+// Featured dishes are pulled from the live restaurant menu (MENU_SECTIONS in
+// app/restaurant/page.tsx) — keep these names + prices in sync if the menu shifts.
 const DISHES = [
-  { name: "Galouti", em: "Kebab", img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&q=80", veg: "Non-veg · Awadhi", price: "₹420" },
-  { name: "Bhatt ki", em: "Churkani", img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&q=80", veg: "Veg · Kumaoni", price: "₹260" },
-  { name: "Dum", em: "Biryani", img: "https://images.unsplash.com/photo-1633945274405-b6c8e4c43c5d?w=600&q=80", veg: "Non-veg · Awadhi", price: "₹480" },
-  { name: "Aloo ke", em: "Gutke", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80", veg: "Veg · Kumaoni", price: "₹220" },
+  { name: "Murg", em: "Mussallam", img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&q=80", veg: "Non-veg · House Special", price: "₹1,250" },
+  { name: "Mutton", em: "Rogan Josh", img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&q=80", veg: "Non-veg · Awadhi", price: "₹390 / ₹780" },
+  { name: "Shahi", em: "Paneer", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80", veg: "Veg · Mughlai", price: "₹270" },
+  { name: "Veg", em: "Biryani", img: "https://images.unsplash.com/photo-1633945274405-b6c8e4c43c5d?w=600&q=80", veg: "Veg · Awadhi", price: "₹220" },
 ];
 
 const DESTS = [
@@ -334,11 +336,11 @@ export default function HomePage() {
                 </p>
                 <div className="feature__price">
                   <span className="from">From</span>
-                  <span className="num">₹3,500</span>
+                  <span className="num">₹7,140</span>
                   <span className="unit">/ night · taxes incl.</span>
                 </div>
                 <div className="feature__ctas">
-                  <Link href="/checkout?type=room&id=premium">
+                  <Link href="/checkout?type=room&id=suite">
                     <Button variant="primary" showArrow>Reserve Suite</Button>
                   </Link>
                   <Link href="/stay">

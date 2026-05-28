@@ -53,6 +53,7 @@ export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/stay", label: "Stay" },
   { href: "/restaurant", label: "Restaurant" },
+  { href: "/banquet", label: "Banquet" },
   { href: "/travel", label: "Travel" },
 ] as const;
 

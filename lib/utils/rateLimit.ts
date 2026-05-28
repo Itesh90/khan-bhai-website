@@ -120,4 +120,6 @@ export const RATE_LIMITS = {
   PAYMENT_CREATE: { limit: 10, windowMs: 60 * 60 * 1000 },
   /** 5 payment verifications per IP per hour */
   PAYMENT_VERIFY: { limit: 5, windowMs: 60 * 60 * 1000 },
+  /** 60 booking-by-ref lookups per IP per minute (confirmation page polling) */
+  BOOKING_BY_REF: { limit: 60, windowMs: 60 * 1000 },
 } as const;

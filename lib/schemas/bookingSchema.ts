@@ -42,8 +42,8 @@ const futureDateSchema = z.coerce
 
 export const createBookingSchema = z
   .object({
-    booking_type: z.enum(["room", "tour"], {
-      errorMap: () => ({ message: "booking_type must be 'room' or 'tour'" }),
+    booking_type: z.enum(["room", "tour", "restaurant"], {
+      errorMap: () => ({ message: "booking_type must be 'room', 'tour' or 'restaurant'" }),
     }),
     customer_name: nameSchema,
     customer_email: emailSchema,
@@ -53,10 +53,24 @@ export const createBookingSchema = z
       .int("guests must be an integer")
       .min(1, "At least 1 guest is required")
       .max(50, "Too many guests"),
-    room_id: z.string().cuid("Invalid room id").optional(),
-    tour_id: z.string().cuid("Invalid tour id").optional(),
+    // Accept both cuids (default Prisma id) and slug-style ids the seed uses
+    // for the user-facing room/tour catalogue (e.g. "deluxe", "balcony").
+    room_id: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(/^[a-z0-9-]+$/, "Invalid room id")
+      .optional(),
+    tour_id: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(/^[a-z0-9-]+$/, "Invalid tour id")
+      .optional(),
     check_in: futureDateSchema.optional(),
     check_out: z.coerce.date().optional(),
+    diningArea: z.string().optional(),
+    timeSlot: z.string().optional(),
     special_requests: z
       .string()
       .trim()
@@ -104,15 +118,37 @@ export const createBookingSchema = z
         path: ["tour_id"],
       });
     }
+    if (data.booking_type === "restaurant") {
+      if (!data.check_in) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Dining date is required for table bookings",
+          path: ["check_in"],
+        });
+      }
+      if (!data.diningArea) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Dining Area is required for table bookings",
+          path: ["diningArea"],
+        });
+      }
+      if (!data.timeSlot) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Time slot is required for table bookings",
+          path: ["timeSlot"],
+        });
+      }
+    }
   });
 
-/** Allowed status transitions enforced at the service layer. */
-export const BOOKING_STATUS_TRANSITIONS: Record<string, readonly string[]> = {
-  pending: ["paid", "confirmed", "cancelled"],
-  paid: ["confirmed", "cancelled"],
-  confirmed: ["cancelled"],
-  cancelled: [], // terminal
-} as const;
+/**
+ * Allowed status transitions enforced at the service layer. Centralised in
+ * lib/payments/stateMachine.ts and re-exported here for backwards-compatible
+ * imports.
+ */
+export { BOOKING_STATUS_TRANSITIONS } from "@/lib/payments/stateMachine";
 
 export const updateBookingSchema = z
   .object({
@@ -126,7 +162,7 @@ export const updateBookingSchema = z
 
 export const listBookingsQuerySchema = z.object({
   status: z.enum(["pending", "paid", "confirmed", "cancelled"]).optional(),
-  type: z.enum(["room", "tour"]).optional(),
+  type: z.enum(["room", "tour", "restaurant"]).optional(),
   search: z.string().trim().max(120).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),

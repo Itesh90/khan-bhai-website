@@ -8,48 +8,37 @@ import Reveal from "@/components/ui/Reveal";
 
 const ROOMS = [
   {
-    id: "standard",
-    label: "Category I",
-    name: "Standard",
-    em: "Room",
-    img: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=900&q=80",
-    lede: "Twin or queen, garden view. Walnut floors, cotton linen, brass fixtures.",
-    amenities: ["Queen bed", "Garden view", "AC", "Tea station", "WiFi"],
-    price: 1200,
-    capacity: 2,
-  },
-  {
     id: "deluxe",
-    label: "Category II",
+    label: "Category I",
     name: "Deluxe",
     em: "Room",
-    img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80",
-    lede: "King bed, sit-out balcony, working desk. The room our regulars come back to.",
+    img: "/images/stay/room-deluxe.jpg",
+    lede: "King bed, sit-out balcony, working desk. Elegant and comfortable stay.",
     amenities: ["King bed", "Balcony", "AC", "Coffee", "WiFi", "Workspace"],
-    price: 2000,
+    price: 2730,
     capacity: 2,
   },
   {
-    id: "premium",
-    label: "Category III",
-    name: "Premium",
-    em: "Suite",
-    img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=900&q=80",
-    lede: "Two-room suite, separate living area, soaking tub. Sleeps a small family.",
-    amenities: ["King bed", "Living area", "Bathtub", "Mini bar", "WiFi"],
-    price: 3500,
-    capacity: 4,
+    id: "balcony",
+    label: "Category II",
+    name: "Room with Balcony View",
+    em: "",
+    img: "/images/stay/room-standard.jpg",
+    lede: "Premium room with a beautiful sit-out balcony offering views of the valley.",
+    amenities: ["King bed", "Valley View Balcony", "AC", "Bathtub", "Mini bar", "WiFi"],
+    price: 3360,
+    capacity: 2,
   },
   {
-    id: "walnut",
-    label: "Category IV",
-    name: "Walnut",
-    em: "Suite",
-    img: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=900&q=80",
-    lede: "Our largest suite. Four-poster bed in unfinished walnut. Sunrise balcony.",
-    amenities: ["Four-poster", "Private balcony", "Lounge", "Tub", "Concierge"],
-    price: 5500,
-    capacity: 3,
+    id: "suite",
+    label: "Category III",
+    name: "Sweet",
+    em: "Room",
+    img: "/images/stay/room-suite.jpg",
+    lede: "Our flagship luxury suite room with unfinished walnut and sunrise balcony.",
+    amenities: ["Four-poster bed", "Private balcony", "Lounge", "Tub", "Concierge"],
+    price: 7140,
+    capacity: 4,
   },
 ];
 
@@ -75,7 +64,7 @@ export default function StayPage() {
           <Reveal>
             <span className="kb-eyebrow">The Stay</span>
             <h1>
-              Twenty-eight rooms, <em>four moods</em>.
+              Twenty-eight rooms, <em>three categories</em>.
             </h1>
             <p>
               Each finished in walnut, brass and hand-loomed Kumaoni textiles. Pick a

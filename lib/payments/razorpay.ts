@@ -45,9 +45,10 @@ const globalForRazorpay = global as unknown as { __razorpay?: Razorpay };
 
 /**
  * Lazily build (and cache) a Razorpay client. Throws if credentials are
- * missing — but only at request time, not at build time.
+ * missing — but only at request time, not at build time. Exported so the
+ * cached-singleton behaviour can be property-tested.
  */
-function getRazorpay(): Razorpay {
+export function getRazorpay(): Razorpay {
   if (globalForRazorpay.__razorpay) return globalForRazorpay.__razorpay;
 
   const keyId = getKeyId();
@@ -109,6 +110,30 @@ export async function createRazorpayOrder(
  */
 export async function fetchRazorpayPayment(paymentId: string) {
   return getRazorpay().payments.fetch(paymentId);
+}
+
+/**
+ * Issue a refund against a captured payment. Amount is in paise (integer).
+ */
+export async function createRazorpayRefund(
+  paymentId: string,
+  amountInPaise: number,
+  notes: Record<string, string> = {}
+): Promise<{
+  id: string;
+  amount: number | string;
+  currency: string;
+  status: string;
+  payment_id: string;
+}> {
+  if (!Number.isInteger(amountInPaise) || amountInPaise <= 0) {
+    throw new Error("createRazorpayRefund: amount must be a positive integer (paise)");
+  }
+  const refund = await getRazorpay().payments.refund(paymentId, {
+    amount: amountInPaise,
+    notes: { project: "Khan Bhai S.", ...notes },
+  } as any);
+  return refund as any;
 }
 
 /**
@@ -192,12 +217,17 @@ export function verifyRazorpaySignature(
   if (!/^order_[A-Za-z0-9]+$/.test(orderId)) return false;
   if (!/^pay_[A-Za-z0-9]+$/.test(paymentId)) return false;
 
+  // A valid Razorpay signature is hex. Reject non-hex before any crypto work so
+  // malformed input never costs an HMAC computation (Req 4.3, 4.4).
+  const normalizedSignature = signature.trim().toLowerCase();
+  if (!/^[a-f0-9]+$/.test(normalizedSignature)) return false;
+
   const expected = crypto
     .createHmac("sha256", keySecret)
     .update(`${orderId}|${paymentId}`)
     .digest("hex");
 
-  return timingSafeEqualHex(expected, signature.trim().toLowerCase());
+  return timingSafeEqualHex(expected, normalizedSignature);
 }
 
 /**
@@ -224,14 +254,6 @@ export function verifyRazorpayWebhookSignature(
   return timingSafeEqualHex(expected, signature.trim().toLowerCase());
 }
 
-/**
- * Redact a sensitive id for logging — keep the prefix + last 4 chars only.
- * e.g. pay_AbCdEf1234 → pay_***1234
- */
-export function redactId(id: string | null | undefined): string {
-  if (!id) return "—";
-  if (id.length <= 8) return "***";
-  const m = id.match(/^([a-z]+_)/);
-  const prefix = m ? m[1] : "";
-  return `${prefix}***${id.slice(-4)}`;
-}
+// `redactId` now lives in the dependency-free redaction module so the logger
+// and audit log share one masking policy. Re-exported here for existing imports.
+export { redactId } from "./redact";

@@ -8,6 +8,7 @@ import {
 import { verifyPaymentSchema } from "@/lib/schemas/paymentSchema";
 import { verifyPayment, confirmPayment } from "@/lib/services/paymentService";
 import { redactId } from "@/lib/payments/razorpay";
+import { recordPaymentEvent } from "@/lib/payments/auditLog";
 import {
   checkRateLimit,
   getClientIp,
@@ -32,6 +33,10 @@ import { logger, newRequestId } from "@/lib/logger";
  */
 export async function POST(request: NextRequest) {
   const requestId = newRequestId();
+  const pathname = request.nextUrl?.pathname ?? "";
+  if (pathname.startsWith("/api/payment/")) {
+    logger.warn("payments.legacy_route_hit", { path: pathname, requestId });
+  }
   try {
     const ip = getClientIp(request);
     const rl = checkRateLimit(
@@ -56,6 +61,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = verifyPaymentSchema.parse(body);
 
+    await recordPaymentEvent({
+      kind: "VERIFY_ATTEMPTED",
+      bookingId: input.booking_id,
+      payload: {
+        orderId: input.razorpay_order_id,
+        paymentId: input.razorpay_payment_id,
+      },
+      processed: false,
+      requestId,
+    });
+
     const ok = verifyPayment(
       input.razorpay_order_id,
       input.razorpay_payment_id,
@@ -68,6 +84,17 @@ export async function POST(request: NextRequest) {
         requestId,
         orderId: redactId(input.razorpay_order_id),
         paymentId: redactId(input.razorpay_payment_id),
+      });
+      await recordPaymentEvent({
+        kind: "VERIFY_FAILED",
+        bookingId: input.booking_id,
+        payload: {
+          orderId: input.razorpay_order_id,
+          paymentId: input.razorpay_payment_id,
+        },
+        processed: true,
+        error: "signature_mismatch",
+        requestId,
       });
       throw new ValidationError("Payment verification failed");
     }
