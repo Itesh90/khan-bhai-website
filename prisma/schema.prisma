@@ -23,6 +23,8 @@ enum BookingType {
   room
   tour
   restaurant
+  scooter
+  taxi
 }
 
 enum BookingStatus {
@@ -155,6 +157,8 @@ model Booking {
   specialRequests String?
   diningArea      String?
   timeSlot        String?
+  /// Scooter model id OR taxi route id for `scooter`/`taxi` bookings (e.g. "activa", "route-nainital").
+  vehicleType     String?
   status          BookingStatus @default(pending)
   totalPrice      Decimal       @db.Decimal(10, 2)
   createdAt       DateTime      @default(now())

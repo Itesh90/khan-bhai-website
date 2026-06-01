@@ -12,8 +12,11 @@ import SiteShell from "@/components/shared/SiteShell";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Reveal from "@/components/ui/Reveal";
+import { SCOOTER_MODELS, TAXI_ROUTES } from "@/lib/constants/travel";
 
-const ROOMS: Record<string, { name: string; img: string; price: number; type: "room" | "tour" | "table" }> = {
+type ItemType = "room" | "tour" | "table" | "scooter" | "taxi";
+
+const ROOMS: Record<string, { name: string; img: string; price: number; type: ItemType }> = {
   deluxe:    { name: "Deluxe Room",            img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80", price: 2730, type: "room" },
   balcony:   { name: "Room with Balcony View", img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=900&q=80", price: 3360, type: "room" },
   suite:     { name: "Sweet Room",             img: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=900&q=80", price: 7140, type: "room" },
@@ -23,11 +26,38 @@ const ROOMS: Record<string, { name: string; img: string; price: number; type: "r
   restaurant: { name: "Restaurant Table",       img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&q=80", price: 200, type: "table" },
 };
 
+// Scooter + taxi entries are sourced from the SAME shared catalog the travel
+// page and the booking service read, so the displayed price and the charged
+// price can never drift apart.
+const CATALOG: Record<string, { name: string; img: string; price: number; type: ItemType }> = {
+  ...ROOMS,
+  ...Object.fromEntries(
+    SCOOTER_MODELS.map((s) => [
+      s.id,
+      { name: s.name, img: s.img, price: s.dailyRate, type: "scooter" as const },
+    ])
+  ),
+  ...Object.fromEntries(
+    TAXI_ROUTES.map((r) => [
+      r.id,
+      { name: r.name, img: r.img, price: r.price, type: "taxi" as const },
+    ])
+  ),
+};
+
+// Pickup-time options for taxi bookings.
+const TAXI_TIMES = [
+  "6:00 AM", "7:00 AM", "8:00 AM", "9:00 AM", "10:00 AM", "11:00 AM",
+  "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
+  "6:00 PM", "7:00 PM", "8:00 PM", "9:00 PM",
+];
+
 function CheckoutContent() {
   const router = useRouter();
   const search = useSearchParams();
   const id = search.get("id") || "deluxe";
-  const item = ROOMS[id] || ROOMS.deluxe;
+  const item = CATALOG[id] || CATALOG.deluxe;
+  const isVehicle = item.type === "scooter" || item.type === "taxi";
 
   const today = new Date();
   const tomorrow = new Date(today.getTime() + 86400000);
@@ -38,11 +68,14 @@ function CheckoutContent() {
     phone: "",
     checkIn: today.toISOString().slice(0, 10),
     checkOut: tomorrow.toISOString().slice(0, 10),
-    guests: 2,
+    // For scooter = number of scooters, taxi = number of cars, else persons/guests.
+    guests: isVehicle ? 1 : 2,
+    // Scooter rental length in days.
+    days: 1,
     terms: false,
   });
   const [diningArea, setDiningArea] = useState("Indoors");
-  const [timeSlot, setTimeSlot] = useState("7:00 PM");
+  const [timeSlot, setTimeSlot] = useState(item.type === "taxi" ? "9:00 AM" : "7:00 PM");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string>("");
@@ -86,13 +119,25 @@ function CheckoutContent() {
     return n;
   }, [form.checkIn, form.checkOut, item.type]);
 
-  const rawSubtotal =
-    (item.type === "tour" || item.type === "table")
-      ? item.price * form.guests
-      : item.price * nights;
+  // Scooter rental end date = start + days; sent as check_out to the API.
+  const scooterCheckOut = useMemo(() => {
+    const d = new Date(form.checkIn);
+    d.setDate(d.getDate() + Math.max(1, form.days));
+    return d.toISOString().slice(0, 10);
+  }, [form.checkIn, form.days]);
 
-  const total = item.type === "room" ? rawSubtotal : Math.round(rawSubtotal * 1.18);
-  const subtotal = item.type === "room" ? Math.round(total / 1.18) : rawSubtotal;
+  const rawSubtotal =
+    item.type === "room"
+      ? item.price * nights
+      : item.type === "scooter"
+      ? item.price * Math.max(1, form.days) * form.guests
+      : item.price * form.guests;
+
+  // Every catalog price is the GST-inclusive final the customer pays, so the
+  // displayed total always equals the amount charged and stored in the DB. GST
+  // is shown as an inclusive split for transparency (matching room behaviour).
+  const total = rawSubtotal;
+  const subtotal = Math.round(total / 1.18);
   const gst = total - subtotal;
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
@@ -131,17 +176,33 @@ function CheckoutContent() {
         bookingAmount = bookingState.amount;
       } else {
         const bookingPayload = {
-          booking_type: item.type === "tour" ? "tour" : item.type === "table" ? "restaurant" : "room",
+          booking_type:
+            item.type === "tour"
+              ? "tour"
+              : item.type === "table"
+              ? "restaurant"
+              : item.type === "scooter"
+              ? "scooter"
+              : item.type === "taxi"
+              ? "taxi"
+              : "room",
           room_id: item.type === "room" ? id : undefined,
           tour_id: item.type === "tour" ? id : undefined,
+          vehicle_type: isVehicle ? id : undefined,
           customer_name: form.name,
           customer_email: form.email,
           customer_phone: form.phone,
           guests: form.guests,
           check_in: form.checkIn,
-          check_out: item.type === "table" ? undefined : form.checkOut,
+          check_out:
+            item.type === "room"
+              ? form.checkOut
+              : item.type === "scooter"
+              ? scooterCheckOut
+              : undefined,
           diningArea: item.type === "table" ? diningArea : undefined,
-          timeSlot: item.type === "table" ? timeSlot : undefined,
+          timeSlot:
+            item.type === "table" || item.type === "taxi" ? timeSlot : undefined,
           special_requests: undefined,
         };
 
@@ -198,6 +259,10 @@ function CheckoutContent() {
             ? `Tour: ${item.name}`
             : item.type === "table"
             ? `Seat Reservation: ${item.name}`
+            : item.type === "scooter"
+            ? `Scooter Rental: ${item.name}`
+            : item.type === "taxi"
+            ? `Taxi: ${item.name}`
             : `Stay: ${item.name}`,
         image: "/logo.png",
         prefill: {
@@ -311,7 +376,15 @@ function CheckoutContent() {
                 />
 
                  <h3 style={{ fontFamily: "var(--kb-serif)", fontSize: 24, fontWeight: 400, marginTop: 24 }}>
-                  {item.type === "tour" ? "Travel" : item.type === "table" ? "Dining" : "Stay"} <em style={{ color: "var(--kb-gold-light)", fontStyle: "italic" }}>details</em>
+                  {item.type === "tour"
+                    ? "Travel"
+                    : item.type === "table"
+                    ? "Dining"
+                    : item.type === "scooter"
+                    ? "Rental"
+                    : item.type === "taxi"
+                    ? "Trip"
+                    : "Stay"} <em style={{ color: "var(--kb-gold-light)", fontStyle: "italic" }}>details</em>
                 </h3>
                 <div className="form-row">
                   {item.type === "table" ? (
@@ -350,6 +423,61 @@ function CheckoutContent() {
                           <option value="8:00 PM" style={{ background: "var(--kb-black)" }}>8:00 PM (Dinner)</option>
                           <option value="9:00 PM" style={{ background: "var(--kb-black)" }}>9:00 PM (Dinner)</option>
                           <option value="10:00 PM" style={{ background: "var(--kb-black)" }}>10:00 PM (Dinner)</option>
+                        </select>
+                      </div>
+                    </>
+                  ) : item.type === "scooter" ? (
+                    <>
+                      <Input
+                        label="Rental start"
+                        name="checkIn"
+                        type="date"
+                        value={form.checkIn}
+                        onChange={(e) => set("checkIn", e.target.value)}
+                      />
+                      <Input
+                        label="Number of days"
+                        name="days"
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={form.days}
+                        onChange={(e) => set("days", Math.max(1, Number(e.target.value)))}
+                      />
+                    </>
+                  ) : item.type === "taxi" ? (
+                    <>
+                      <Input
+                        label="Travel date"
+                        name="checkIn"
+                        type="date"
+                        value={form.checkIn}
+                        onChange={(e) => set("checkIn", e.target.value)}
+                      />
+                      <div className="input-group">
+                        <label className="kb-input-label" htmlFor="timeSlot">Pickup time</label>
+                        <select
+                          id="timeSlot"
+                          value={timeSlot}
+                          onChange={(e) => setTimeSlot(e.target.value)}
+                          className="kb-input"
+                          style={{
+                            width: "100%",
+                            height: 50,
+                            background: "transparent",
+                            color: "var(--kb-text)",
+                            border: "0.5px solid var(--kb-gold-dim)",
+                            padding: "0 16px",
+                            outline: "none",
+                            fontFamily: "var(--kb-sans)",
+                            fontSize: 14,
+                          }}
+                        >
+                          {TAXI_TIMES.map((t) => (
+                            <option key={t} value={t} style={{ background: "var(--kb-black)" }}>
+                              {t}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </>
@@ -405,13 +533,23 @@ function CheckoutContent() {
                 )}
 
                 <Input
-                  label={item.type === "tour" ? "Persons" : item.type === "table" ? "Seats (Guests)" : "Guests"}
+                  label={
+                    item.type === "tour"
+                      ? "Persons"
+                      : item.type === "table"
+                      ? "Seats (Guests)"
+                      : item.type === "scooter"
+                      ? "Number of scooters"
+                      : item.type === "taxi"
+                      ? "Number of cars"
+                      : "Guests"
+                  }
                   name="guests"
                   type="number"
                   min={1}
                   max={10}
                   value={form.guests}
-                  onChange={(e) => set("guests", Number(e.target.value))}
+                  onChange={(e) => set("guests", Math.max(1, Number(e.target.value)))}
                 />
 
                 <label
@@ -474,12 +612,38 @@ function CheckoutContent() {
                 <h3 style={{ marginTop: 8 }}>{item.name}</h3>
                 <div className="item-img" style={{ backgroundImage: `url(${item.img})` }} />
                 <div className="summary-line">
-                  <span>{item.type === "tour" ? "Per person" : item.type === "table" ? "Per seat cover" : "Per night"}</span>
+                  <span>
+                    {item.type === "tour"
+                      ? "Per person"
+                      : item.type === "table"
+                      ? "Per seat cover"
+                      : item.type === "scooter"
+                      ? "Per day"
+                      : item.type === "taxi"
+                      ? "Per trip"
+                      : "Per night"}
+                  </span>
                   <b>₹{item.price.toLocaleString("en-IN")}</b>
                 </div>
+                {item.type === "scooter" && (
+                  <div className="summary-line">
+                    <span>Days</span>
+                    <b>{Math.max(1, form.days)}</b>
+                  </div>
+                )}
                 <div className="summary-line">
-                  <span>{item.type === "tour" ? "Persons" : item.type === "table" ? "Seats" : "Nights"}</span>
-                  <b>{item.type === "tour" || item.type === "table" ? form.guests : nights}</b>
+                  <span>
+                    {item.type === "tour"
+                      ? "Persons"
+                      : item.type === "table"
+                      ? "Seats"
+                      : item.type === "scooter"
+                      ? "Scooters"
+                      : item.type === "taxi"
+                      ? "Cars"
+                      : "Nights"}
+                  </span>
+                  <b>{item.type === "room" ? nights : form.guests}</b>
                 </div>
                 <div className="summary-line">
                   <span>Subtotal</span>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Button from "@/components/ui/Button";
 import Monogram from "@/components/ui/Monogram";
+import { getScooter, getTaxiRoute } from "@/lib/constants/travel";
 
 const TABS = [
   { key: "bookings", label: "Bookings" },
@@ -99,11 +100,17 @@ export default function AdminPage() {
       return `Restaurant (${b.diningArea || "Luxury Indoors"}) - ${
         b.timeSlot || ""
       }`;
+    if (b.type === "scooter")
+      return `Scooter — ${getScooter(b.vehicleType ?? "")?.name || b.vehicleType || "rental"} × ${b.numberOfGuests}`;
+    if (b.type === "taxi")
+      return `Taxi — ${getTaxiRoute(b.vehicleType ?? "")?.name || b.vehicleType || "route"}`;
     return "Unknown";
   };
 
   const getBookingDates = (b: any) => {
     if (b.type === "restaurant") return formatDate(b.checkInDate);
+    if (b.type === "taxi")
+      return `${formatDate(b.checkInDate)}${b.timeSlot ? " · " + b.timeSlot : ""}`;
     return `${formatDate(b.checkInDate)} – ${formatDate(b.checkOutDate)}`;
   };
 

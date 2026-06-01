@@ -42,8 +42,11 @@ const futureDateSchema = z.coerce
 
 export const createBookingSchema = z
   .object({
-    booking_type: z.enum(["room", "tour", "restaurant"], {
-      errorMap: () => ({ message: "booking_type must be 'room', 'tour' or 'restaurant'" }),
+    booking_type: z.enum(["room", "tour", "restaurant", "scooter", "taxi"], {
+      errorMap: () => ({
+        message:
+          "booking_type must be 'room', 'tour', 'restaurant', 'scooter' or 'taxi'",
+      }),
     }),
     customer_name: nameSchema,
     customer_email: emailSchema,
@@ -66,6 +69,13 @@ export const createBookingSchema = z
       .min(1)
       .max(64)
       .regex(/^[a-z0-9-]+$/, "Invalid tour id")
+      .optional(),
+    // Scooter model id or taxi route id (matches lib/constants/travel.ts ids).
+    vehicle_type: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(/^[a-z0-9-]+$/, "Invalid vehicle type")
       .optional(),
     check_in: futureDateSchema.optional(),
     check_out: z.coerce.date().optional(),
@@ -141,6 +151,62 @@ export const createBookingSchema = z
         });
       }
     }
+    if (data.booking_type === "scooter") {
+      if (!data.vehicle_type) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "A scooter model is required for scooter rentals",
+          path: ["vehicle_type"],
+        });
+      }
+      if (!data.check_in || !data.check_out) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Rental start and end dates are required for scooter rentals",
+          path: ["check_in"],
+        });
+      } else if (data.check_out <= data.check_in) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Rental end date must be after the start date",
+          path: ["check_out"],
+        });
+      } else {
+        // Cap rentals at 30 days to catch obvious tampering.
+        const ms = data.check_out.getTime() - data.check_in.getTime();
+        const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
+        if (days > 30) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Scooter rentals cannot exceed 30 days — please contact us",
+            path: ["check_out"],
+          });
+        }
+      }
+    }
+    if (data.booking_type === "taxi") {
+      if (!data.vehicle_type) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "A taxi route is required for taxi bookings",
+          path: ["vehicle_type"],
+        });
+      }
+      if (!data.check_in) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Travel date is required for taxi bookings",
+          path: ["check_in"],
+        });
+      }
+      if (!data.timeSlot) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Pickup time is required for taxi bookings",
+          path: ["timeSlot"],
+        });
+      }
+    }
   });
 
 /**
@@ -162,7 +228,7 @@ export const updateBookingSchema = z
 
 export const listBookingsQuerySchema = z.object({
   status: z.enum(["pending", "paid", "confirmed", "cancelled"]).optional(),
-  type: z.enum(["room", "tour", "restaurant"]).optional(),
+  type: z.enum(["room", "tour", "restaurant", "scooter", "taxi"]).optional(),
   search: z.string().trim().max(120).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),

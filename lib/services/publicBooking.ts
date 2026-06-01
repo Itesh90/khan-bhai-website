@@ -14,6 +14,8 @@
  */
 export const BOOKING_REF_RE = /^KB-[A-Z0-9]{3,16}(?:-[A-Z0-9]{3,16}){0,3}$/;
 
+import { getScooter, getTaxiRoute } from "@/lib/constants/travel";
+
 export interface PublicBookingInput {
   bookingRef: string;
   guestName: string;
@@ -21,6 +23,7 @@ export interface PublicBookingInput {
   status: string;
   totalPrice: { toString(): string } | number;
   diningArea?: string | null;
+  vehicleType?: string | null;
   room?: { name: string } | null;
   tour?: { name: string } | null;
   payment?: { method?: string | null; paymentMethod?: string | null } | null;
@@ -41,6 +44,12 @@ function itemNameFor(b: PublicBookingInput): string {
   if (b.room?.name) return b.room.name;
   if (b.tour?.name) return b.tour.name;
   if (b.type === "restaurant") return b.diningArea || "Table reservation";
+  if (b.type === "scooter") {
+    return getScooter(b.vehicleType ?? "")?.name || "Scooter rental";
+  }
+  if (b.type === "taxi") {
+    return getTaxiRoute(b.vehicleType ?? "")?.name || "Taxi booking";
+  }
   return "Your reservation";
 }
 

@@ -5,6 +5,7 @@ import { useState } from "react";
 import SiteShell from "@/components/shared/SiteShell";
 import Button from "@/components/ui/Button";
 import Reveal from "@/components/ui/Reveal";
+import { SCOOTER_MODELS, TAXI_ROUTES } from "@/lib/constants/travel";
 
 const TOURS = [
   {
@@ -122,6 +123,76 @@ export default function TravelPage() {
                 </Reveal>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      <section className="sect">
+        <div className="kb-container">
+          <Reveal>
+            <span className="kb-eyebrow">On Two Wheels</span>
+            <h2>Scooter <em>rentals</em>.</h2>
+            <p>
+              Self-ride the foothills at your own pace. Helmet and a full tank to start —
+              book and pay online, collect the keys at reception.
+            </p>
+          </Reveal>
+          <div className="cards-grid" style={{ marginTop: 32 }}>
+            {SCOOTER_MODELS.map((s, i) => (
+              <Reveal key={s.id} delay={i * 0.06} as="article">
+                <div className="room-card">
+                  <div className="room-card__img" style={{ backgroundImage: `url(${s.img})` }} />
+                  <div className="room-card__body">
+                    <div className="room-card__label">Per day · helmet included</div>
+                    <h3 className="room-card__name">{s.name}</h3>
+                    <p className="room-card__lede">{s.blurb}</p>
+                    <div className="room-card__foot">
+                      <div className="room-card__price">
+                        ₹{s.dailyRate.toLocaleString("en-IN")}<small>/ day</small>
+                      </div>
+                      <Link href={`/checkout?type=scooter&id=${s.id}`}>
+                        <Button variant="primary" showArrow>Rent Now</Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="sect">
+        <div className="kb-container">
+          <Reveal>
+            <span className="kb-eyebrow">Cabs & Transfers</span>
+            <h2>Taxi <em>&amp; cabs</em>.</h2>
+            <p>
+              Vetted local drivers on fixed, transparent fares. Pick a route, choose your
+              pickup time, and pay online — no haggling at the gate.
+            </p>
+          </Reveal>
+          <div className="cards-grid" style={{ marginTop: 32 }}>
+            {TAXI_ROUTES.map((r, i) => (
+              <Reveal key={r.id} delay={i * 0.06} as="article">
+                <div className="room-card">
+                  <div className="room-card__img" style={{ backgroundImage: `url(${r.img})` }} />
+                  <div className="room-card__body">
+                    <div className="room-card__label">Fixed fare · private cab</div>
+                    <h3 className="room-card__name">{r.name}</h3>
+                    <p className="room-card__lede">{r.blurb}</p>
+                    <div className="room-card__foot">
+                      <div className="room-card__price">
+                        ₹{r.price.toLocaleString("en-IN")}<small>/ trip</small>
+                      </div>
+                      <Link href={`/checkout?type=taxi&id=${r.id}`}>
+                        <Button variant="primary" showArrow>Book Cab</Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>

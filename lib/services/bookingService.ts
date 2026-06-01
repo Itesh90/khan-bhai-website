@@ -6,6 +6,7 @@ import {
   ValidationError,
 } from "@/lib/errors";
 import { generateBookingReference, calculateNights } from "@/lib/utils/helpers";
+import { scooterTotal, taxiTotal } from "@/lib/constants/travel";
 import { logger } from "@/lib/logger";
 import { BOOKING_STATUS_TRANSITIONS } from "@/lib/schemas/bookingSchema";
 import type {
@@ -127,6 +128,7 @@ export async function createBooking(input: CreateBookingInput) {
     let totalPrice = 0;
     let roomId: string | undefined;
     let tourId: string | undefined;
+    let vehicleType: string | undefined;
     let checkInDate: Date | undefined;
     let checkOutDate: Date | undefined;
 
@@ -202,6 +204,31 @@ export async function createBooking(input: CreateBookingInput) {
 
       totalPrice = 200 * input.guests;
       checkInDate = checkIn;
+    } else if (input.booking_type === "scooter") {
+      // Quantity of scooters is carried in `guests`. Price is computed from the
+      // shared catalog (lib/constants/travel.ts) — the single source of truth
+      // that the checkout page also reads, so the two can never disagree.
+      checkInDate = input.check_in!;
+      checkOutDate = input.check_out!;
+      const days = calculateNights(checkInDate, checkOutDate);
+      if (days <= 0) {
+        throw new ValidationError("Invalid rental duration");
+      }
+      const total = scooterTotal(input.vehicle_type!, days, input.guests);
+      if (total === null) {
+        throw new NotFoundError("Selected scooter is not available");
+      }
+      totalPrice = total;
+      vehicleType = input.vehicle_type!;
+    } else if (input.booking_type === "taxi") {
+      // Number of cars is carried in `guests`; pickup time in `timeSlot`.
+      const total = taxiTotal(input.vehicle_type!, input.guests);
+      if (total === null) {
+        throw new NotFoundError("Selected taxi route is not available");
+      }
+      totalPrice = total;
+      vehicleType = input.vehicle_type!;
+      checkInDate = input.check_in!;
     } else {
       const tour = await tx.tour.findUnique({
         where: { id: input.tour_id! },
@@ -237,6 +264,7 @@ export async function createBooking(input: CreateBookingInput) {
         type: input.booking_type,
         roomId,
         tourId,
+        vehicleType,
         guestName: input.customer_name,
         guestEmail: input.customer_email,
         guestPhone: input.customer_phone,

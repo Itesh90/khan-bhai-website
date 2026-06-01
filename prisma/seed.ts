@@ -167,17 +167,25 @@ async function main() {
   );
 
   // ── 3. Tours ─────────────────────────────────────────────────────────────────
+  // Tour ids/prices are kept in lockstep with the public catalogue
+  // (app/travel/page.tsx + app/checkout/page.tsx). The ids use the slug form the
+  // site links with (e.g. ?type=tour&id=nainital) and pass the booking
+  // vehicle/tour id regex. Remove superseded rows from older seeds first.
+  await prisma.tour.deleteMany({
+    where: { id: { in: ["tour_nainital_001", "tour_corbett_002", "tour_kedarnath_003"] } },
+  });
+
   const nainitalTour = await prisma.tour.upsert({
-    where: { id: "tour_nainital_001" },
-    update: {},
+    where: { id: "nainital" },
+    update: { name: "Nainital & Bhimtal", price: 6500, duration: 3, available: true },
     create: {
-      id: "tour_nainital_001",
-      name: "Nainital Weekend Escape",
+      id: "nainital",
+      name: "Nainital & Bhimtal",
       description:
-        "A refreshing 2-day weekend getaway to the beautiful lake city of Nainital. Explore the iconic Naini Lake, Mall Road, and the scenic cable car ride.",
+        "A refreshing 3-day getaway to the beautiful lake city of Nainital and nearby Bhimtal. Explore the iconic Naini Lake, Mall Road, Tiffin Top, and the scenic boat rides.",
       destination: "Nainital, Uttarakhand",
-      price: 4500,
-      duration: 2,
+      price: 6500,
+      duration: 3,
       maxGuests: 20,
       includes: ["Meals", "Transport", "Guide", "Hotel"],
       images: [
@@ -203,11 +211,11 @@ async function main() {
   });
 
   const corbettTour = await prisma.tour.upsert({
-    where: { id: "tour_corbett_002" },
-    update: {},
+    where: { id: "corbett" },
+    update: { name: "Jim Corbett", price: 8000, duration: 3, available: true },
     create: {
-      id: "tour_corbett_002",
-      name: "Jim Corbett Safari Adventure",
+      id: "corbett",
+      name: "Jim Corbett",
       description:
         "An exhilarating 3-day wildlife safari in Jim Corbett National Park — India's oldest national park. Spot tigers, elephants, and a rich variety of bird species.",
       destination: "Jim Corbett National Park, Uttarakhand",
@@ -244,10 +252,10 @@ async function main() {
   });
 
   const kedarnathTour = await prisma.tour.upsert({
-    where: { id: "tour_kedarnath_003" },
-    update: {},
+    where: { id: "kedarnath" },
+    update: { name: "Kedarnath Yatra", price: 12000, duration: 4, available: true },
     create: {
-      id: "tour_kedarnath_003",
+      id: "kedarnath",
       name: "Kedarnath Yatra",
       description:
         "A spiritually enriching 4-day pilgrimage to one of India's holiest Shiva temples. Experience the majestic Himalayas, sacred rituals, and profound inner peace.",
@@ -364,7 +372,7 @@ async function main() {
       checkOutDate: daysAgo(28),
       specialRequests: "Vegetarian meals for all guests.",
       status: "confirmed",
-      totalPrice: 18000, // 4 guests × ₹4,500
+      totalPrice: 26000, // 4 guests × ₹6,500
     },
   });
 
@@ -397,7 +405,7 @@ async function main() {
     update: {},
     create: {
       bookingId: confirmedBooking.id,
-      amount: 18000,
+      amount: 26000,
       currency: "INR",
       paymentMethod: "razorpay",
       razorpayOrderId: "order_seed_failed_002",
