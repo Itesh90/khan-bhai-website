@@ -711,6 +711,59 @@ button { font-family: inherit; cursor: pointer; border: 0; background: none; col
 }
 @media (max-width: 720px) { .dishes__grid { grid-template-columns: 1fr 1fr; } }
 
+/* Restaurant — photographic hero background + ambiance gallery */
+.page-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 40px;
+  border-top: 0.5px solid rgba(201, 168, 76, 0.18);
+  border-left: 0.5px solid rgba(201, 168, 76, 0.18);
+}
+.gallery-tile {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--kb-black);
+  border-right: 0.5px solid rgba(201, 168, 76, 0.18);
+  border-bottom: 0.5px solid rgba(201, 168, 76, 0.18);
+}
+.gallery-tile__img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: grayscale(0.25) brightness(0.92);
+  transition: filter .5s, transform .8s;
+}
+.gallery-tile:hover .gallery-tile__img {
+  filter: none;
+  transform: scale(1.04);
+}
+.gallery-tile__cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 32px 16px 14px;
+  font-family: var(--kb-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--kb-text);
+  background: linear-gradient(0deg, rgba(8, 8, 8, 0.88), transparent);
+  pointer-events: none;
+}
+@media (max-width: 720px) { .gallery-grid { grid-template-columns: 1fr 1fr; } }
+
 /* Guest cards */
 .guest {
   background: linear-gradient(180deg, #0a0a0a, #0d0d0d);

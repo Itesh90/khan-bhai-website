@@ -167,6 +167,21 @@ const FEATURED_DISHES = [
   { name: "Veg", em: "Biryani", img: "https://images.unsplash.com/photo-1633945274405-b6c8e4c43c5d?w=600&q=80", veg: "Veg · Awadhi", price: "₹220" },
 ];
 
+// Real photographs of the restaurant from /public/images/restaurant — shown as a
+// uniform, aligned grid so guests can see the actual space (indoors first, then
+// the patio). heritage-wall.jpg is used in the Hours section below.
+const AMBIANCE = [
+  { img: "/images/restaurant/dining-overview.jpg", label: "The Main Hall" },
+  { img: "/images/restaurant/dining-hall-1.jpg", label: "Dining Room" },
+  { img: "/images/restaurant/dining-hall-2.jpg", label: "Evening Service" },
+  { img: "/images/restaurant/booth-seating.jpg", label: "Booth Seating" },
+  { img: "/images/restaurant/private-nook-1.jpg", label: "Private Nook" },
+  { img: "/images/restaurant/private-nook-2.jpg", label: "Corner Table" },
+  { img: "/images/restaurant/patio-pergola.jpg", label: "The Pergola Patio" },
+  { img: "/images/restaurant/patio-vine.jpg", label: "Vine Courtyard" },
+  { img: "/images/restaurant/patio-lounge.jpg", label: "Patio Lounge" },
+];
+
 export default function RestaurantPage() {
   const [activeCategory, setActiveCategory] = useState("all");
 
@@ -178,7 +193,14 @@ export default function RestaurantPage() {
   return (
     <SiteShell>
       <section className="page-hero kb-grain">
-        <div className="kb-container">
+        <div
+          className="page-hero__bg"
+          style={{
+            backgroundImage:
+              "linear-gradient(180deg, rgba(10,10,10,0.74) 0%, rgba(20,16,10,0.88) 100%), url(/images/restaurant/dining-wide.jpg)",
+          }}
+        />
+        <div className="kb-container" style={{ position: "relative", zIndex: 1 }}>
           <Reveal>
             <span className="kb-eyebrow">The Kitchen</span>
             <h1>Two states, <em>one fire</em>.</h1>
@@ -197,6 +219,31 @@ export default function RestaurantPage() {
               </a>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      {/* Ambiance gallery — how the restaurant actually looks */}
+      <section className="sect" style={{ paddingBottom: 0 }}>
+        <div className="kb-container">
+          <Reveal className="sect__head">
+            <span className="kb-eyebrow">The Room</span>
+            <h2 style={{ marginTop: 14 }}>Inside <em>the dining room</em>.</h2>
+            <p>
+              From the heritage hall to the vine-shaded patio — the rooms where Awadhi and
+              Kumaoni plates are served, evening after evening.
+            </p>
+          </Reveal>
+          <div className="gallery-grid">
+            {AMBIANCE.map((g, i) => (
+              <Reveal key={g.img} delay={i * 0.04} as="article" className="gallery-tile">
+                <div
+                  className="gallery-tile__img"
+                  style={{ backgroundImage: `url(${g.img})` }}
+                />
+                <div className="gallery-tile__cap">{g.label}</div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
