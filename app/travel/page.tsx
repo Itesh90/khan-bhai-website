@@ -5,6 +5,7 @@ import { useState } from "react";
 import SiteShell from "@/components/shared/SiteShell";
 import Button from "@/components/ui/Button";
 import Reveal from "@/components/ui/Reveal";
+import { BRAND } from "@/lib/design";
 import { SCOOTER_MODELS, TAXI_ROUTES } from "@/lib/constants/travel";
 
 const TOURS = [
@@ -12,7 +13,7 @@ const TOURS = [
     id: "nainital",
     name: "Nainital",
     em: "& Bhimtal",
-    img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1200&q=80",
+    img: "/images/travel/IMG_1774.jpg",
     days: 3,
     price: 6500,
     lede: "Lake walks at first light, sunrise from Tiffin Top, an evening on the boats. Two hill stations in three considered days.",
@@ -27,7 +28,7 @@ const TOURS = [
     id: "corbett",
     name: "Jim",
     em: "Corbett",
-    img: "https://images.unsplash.com/photo-1606298855672-3efb63017be8?w=1200&q=80",
+    img: "/images/travel/IMG_1768.jpg",
     days: 3,
     price: 8000,
     lede: "Two safaris, one bird-watching morning. Forest stay, packed lunches, vetted naturalist guide.",
@@ -40,20 +41,52 @@ const TOURS = [
   },
   {
     id: "kedarnath",
-    name: "Kedarnath",
-    em: "Yatra",
-    img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200&q=80",
+    name: "Char Dham",
+    em: "& Kedarnath",
+    img: "/images/travel/IMG_1770.jpg",
     days: 4,
     price: 12000,
     lede: "A measured pilgrimage. Vehicle to Gaurikund, ponies and porters arranged, two nights at altitude.",
-    highlights: ["Gaurikund base", "Kedarnath darshan", "Triyuginarayan", "Sonprayag camp"],
+    highlights: ["Gaurikund base", "Kedarnath darshan", "Badrinath & Mana", "Sonprayag camp"],
     itinerary: [
       { d: "Day 1", t: "Drive to Sonprayag", desc: "Long drive day, overnight at Sonprayag camp." },
       { d: "Day 2", t: "Gaurikund to Kedarnath", desc: "Vehicle to Gaurikund, ascent (pony/porter optional), overnight near temple." },
       { d: "Day 3", t: "Darshan & descent", desc: "Pre-dawn darshan, descent to Sonprayag by evening." },
-      { d: "Day 4", t: "Triyuginarayan & return", desc: "Side trip to Triyuginarayan temple, drive back to Haldwani." },
+      { d: "Day 4", t: "Badrinath & Mana", desc: "Onward to Badrinath darshan and the last Indian village at Mana, then drive back." },
     ],
   },
+];
+
+// Our own vehicles, photographed on the road over the years. Every car here is
+// part of the working fleet — not stock imagery.
+const FLEET = [
+  { img: "/images/travel/IMG_1772.jpg", label: "The fleet · Haldwani" },
+  { img: "/images/travel/IMG_1766.jpg", label: "Convoy · ready to roll" },
+  { img: "/images/travel/IMG_1794.jpg", label: "Innova Crysta · 6+1 seats" },
+  { img: "/images/travel/IMG_1792.jpg", label: "Innova Crysta · airport-ready" },
+  { img: "/images/travel/IMG_1776.jpg", label: "Tempo Traveller · 12 seats" },
+  { img: "/images/travel/IMG_1783.jpg", label: "Force Traveller · big groups" },
+  { img: "/images/travel/IMG_1781.jpg", label: "Swift Dzire · airport runs" },
+  { img: "/images/travel/IMG_1782.jpg", label: "Swift Dzire · city sedan" },
+  { img: "/images/travel/IMG_1784.jpg", label: "Alto · light & nimble" },
+  { img: "/images/travel/IMG_1803.JPG", label: "Maruti Gypsy · Corbett safari" },
+  { img: "/images/travel/IMG_1785.jpg", label: "Tavera · 7 seats" },
+  { img: "/images/travel/IMG_1767.jpg", label: "On tour · first snow" },
+];
+
+// Flower-decked cars on hire for weddings and baraats.
+const WEDDINGS = [
+  { img: "/images/travel/IMG_1791.jpg", label: "Fortuner · marigold doli" },
+  { img: "/images/travel/IMG_1802.jpg", label: "Corolla Altis · rose baraat" },
+  { img: "/images/travel/IMG_1800.jpg", label: "Etios · evening wedding" },
+];
+
+// Candid frames from real trips — proof in the people, not the brochure.
+const MOMENTS = [
+  { img: "/images/travel/IMG_1769.jpg", label: "Mana · the last Indian village" },
+  { img: "/images/travel/IMG_1773.jpg", label: "Group departure · break of dawn" },
+  { img: "/images/travel/IMG_1771.jpg", label: "Hot lunch on the road" },
+  { img: "/images/travel/IMG_1765.jpg", label: "Twelve cars, one yatra" },
 ];
 
 export default function TravelPage() {
@@ -62,13 +95,20 @@ export default function TravelPage() {
   return (
     <SiteShell>
       <section className="page-hero kb-grain">
-        <div className="kb-container">
+        <div
+          className="page-hero__bg"
+          style={{
+            backgroundImage:
+              "linear-gradient(180deg, rgba(10,10,10,0.72) 0%, rgba(18,15,9,0.9) 100%), url(/images/travel/IMG_1763.png)",
+          }}
+        />
+        <div className="kb-container" style={{ position: "relative", zIndex: 1 }}>
           <Reveal>
             <span className="kb-eyebrow">The Travel Desk</span>
             <h1>Routes through <em>the foothills</em>.</h1>
             <p>
-              Every package built around our own family&apos;s travel notes. Private vehicles,
-              vetted homestays, no rushed itineraries.
+              Driving Kumaon since 1998 — Char Dham, Corbett, Nainital and back.
+              Our own vehicles, our own drivers, no rushed itineraries.
             </p>
           </Reveal>
         </div>
@@ -76,7 +116,11 @@ export default function TravelPage() {
 
       <section className="sect">
         <div className="kb-container">
-          <div style={{ display: "grid", gap: 28 }}>
+          <Reveal>
+            <span className="kb-eyebrow">Signature Journeys</span>
+            <h2>Packages we&apos;ve <em>driven ourselves</em>.</h2>
+          </Reveal>
+          <div style={{ display: "grid", gap: 28, marginTop: 32 }}>
             {TOURS.map((t, i) => {
               const open = openId === t.id;
               return (
@@ -123,6 +167,27 @@ export default function TravelPage() {
                 </Reveal>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      <section className="sect">
+        <div className="kb-container">
+          <Reveal>
+            <span className="kb-eyebrow">Our Fleet</span>
+            <h2>The cars that <em>do the miles</em>.</h2>
+            <p>
+              Hatchbacks for a quick lake run, sedans for the airport, Innovas and
+              Travellers for the family — all owned, maintained and driven by us.
+            </p>
+          </Reveal>
+          <div className="gallery-grid">
+            {FLEET.map((v, i) => (
+              <Reveal key={v.img} delay={i * 0.04} as="article" className="gallery-tile">
+                <div className="gallery-tile__img" style={{ backgroundImage: `url(${v.img})` }} />
+                <div className="gallery-tile__cap">{v.label}</div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -194,6 +259,106 @@ export default function TravelPage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="sect">
+        <div className="kb-container">
+          <Reveal>
+            <span className="kb-eyebrow">Weddings & Occasions</span>
+            <h2>Flowers on the <em>bonnet</em>.</h2>
+            <p>
+              Decorated cars for the doli and baraat — Fortuner, Corolla, Etios and more,
+              dressed in marigold and rose and driven to the muhurat on time.
+            </p>
+          </Reveal>
+          <div className="gallery-grid">
+            {WEDDINGS.map((w, i) => (
+              <Reveal key={w.img} delay={i * 0.05} as="article" className="gallery-tile">
+                <div className="gallery-tile__img" style={{ backgroundImage: `url(${w.img})` }} />
+                <div className="gallery-tile__cap">{w.label}</div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal delay={0.1}>
+            <div className="cta-band__ctas" style={{ marginTop: 32 }}>
+              <a href={`https://wa.me/${BRAND.whatsapp}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="primary" showArrow>Enquire on WhatsApp</Button>
+              </a>
+              <a href={`tel:${BRAND.phone.replace(/\s/g, "")}`}>
+                <Button variant="ghost">Call {BRAND.phone}</Button>
+              </a>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* HERITAGE — credibility, grounded in the old photographs */}
+      <section className="sect why">
+        <div className="kb-container">
+          <div className="why__grid">
+            <Reveal className="why__copy">
+              <span className="kb-eyebrow">On the road since 1998</span>
+              <h2 style={{ marginTop: 14 }}>Twenty-eight years of the <em>same roads</em>.</h2>
+              <p className="lede">
+                It started with one Maruti Omni running the plains to the hills, the
+                family name hand-painted on the door. A Toyota Qualis came next, and with
+                it the full Char Dham circuit. The number plates tell the story — Delhi,
+                then UA, now UK — but the hands on the wheel never changed.
+              </p>
+              <div className="why__list">
+                <div className="why__item">
+                  <span className="num">1998</span>
+                  <h4>The first van</h4>
+                  <p>A single Maruti Omni, Delhi plates, ferrying pilgrims to the foothills.</p>
+                </div>
+                <div className="why__item">
+                  <span className="num">c. 2003</span>
+                  <h4>The Qualis years</h4>
+                  <p>A Toyota Qualis and the first full Char Dham and Kedarnath runs.</p>
+                </div>
+                <div className="why__item">
+                  <span className="num">Today</span>
+                  <h4>A working fleet</h4>
+                  <p>Hatchbacks, sedans, Innovas, Travellers and safari Gypsies — all our own.</p>
+                </div>
+                <div className="why__item">
+                  <span className="num">28 yrs</span>
+                  <h4>One family</h4>
+                  <p>Same drivers, same name over the door, three generations on these roads.</p>
+                </div>
+              </div>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div className="why__media">
+                  <div className="why__media-img" style={{ backgroundImage: "url(/images/travel/IMG_1804.jpg)" }} />
+                  <div className="why__media-cap">
+                    <div className="num">1998</div>
+                    <div className="lab">The first van · Maruti Omni</div>
+                  </div>
+                </div>
+                <div className="why__media">
+                  <div className="why__media-img" style={{ backgroundImage: "url(/images/travel/IMG_1787.jpg)" }} />
+                  <div className="why__media-cap">
+                    <div className="num">c. 2003</div>
+                    <div className="lab">The Qualis years</div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+
+          <Reveal delay={0.15}>
+            <div className="gallery-grid gallery-grid--4">
+              {MOMENTS.map((m) => (
+                <article key={m.img} className="gallery-tile">
+                  <div className="gallery-tile__img" style={{ backgroundImage: `url(${m.img})` }} />
+                  <div className="gallery-tile__cap">{m.label}</div>
+                </article>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
     </SiteShell>

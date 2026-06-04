@@ -762,7 +762,11 @@ button { font-family: inherit; cursor: pointer; border: 0; background: none; col
   background: linear-gradient(0deg, rgba(8, 8, 8, 0.88), transparent);
   pointer-events: none;
 }
-@media (max-width: 720px) { .gallery-grid { grid-template-columns: 1fr 1fr; } }
+.gallery-grid--4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 720px) {
+  .gallery-grid { grid-template-columns: 1fr 1fr; }
+  .gallery-grid--4 { grid-template-columns: 1fr 1fr; }
+}
 
 /* Guest cards */
 .guest {
