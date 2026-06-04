@@ -768,6 +768,53 @@ button { font-family: inherit; cursor: pointer; border: 0; background: none; col
   .gallery-grid--4 { grid-template-columns: 1fr 1fr; }
 }
 
+/* Travel — experiences grid + destination tags */
+.exp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin-top: 40px;
+  border-top: 0.5px solid rgba(201, 168, 76, 0.18);
+  border-left: 0.5px solid rgba(201, 168, 76, 0.18);
+}
+.exp-item {
+  border-right: 0.5px solid rgba(201, 168, 76, 0.18);
+  border-bottom: 0.5px solid rgba(201, 168, 76, 0.18);
+  padding: 30px 24px;
+  transition: background .4s;
+}
+.exp-item:hover { background: rgba(201, 168, 76, 0.04); }
+.exp-item .k {
+  font-family: var(--kb-mono);
+  font-size: 9px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--kb-gold);
+}
+.exp-item h4 {
+  font-family: var(--kb-serif);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--kb-text);
+  margin: 10px 0 8px;
+}
+.exp-item p { font-size: 13px; line-height: 1.7; color: var(--kb-text-muted); }
+@media (max-width: 900px) { .exp-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 540px) { .exp-grid { grid-template-columns: 1fr; } }
+
+.dest-tags { display: flex; flex-wrap: wrap; gap: 10px; }
+.dest-tag {
+  font-family: var(--kb-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kb-text-muted);
+  border: 0.5px solid var(--kb-gold-line);
+  padding: 10px 16px;
+  transition: color .3s, border-color .3s;
+}
+.dest-tag:hover { color: var(--kb-gold-light); border-color: var(--kb-gold); }
+
 /* Guest cards */
 .guest {
   background: linear-gradient(180deg, #0a0a0a, #0d0d0d);

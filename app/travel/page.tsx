@@ -8,7 +8,42 @@ import Reveal from "@/components/ui/Reveal";
 import { BRAND } from "@/lib/design";
 import { SCOOTER_MODELS, TAXI_ROUTES } from "@/lib/constants/travel";
 
-const TOURS = [
+// Trip-type tags drive the filter below. A tour can belong to more than one.
+type TripType = "couple" | "family" | "group" | "solo" | "adventure" | "pilgrimage";
+
+const TRIP_TYPES: { key: "all" | TripType; label: string }[] = [
+  { key: "all", label: "All Journeys" },
+  { key: "couple", label: "Couple" },
+  { key: "family", label: "Family" },
+  { key: "group", label: "Group" },
+  { key: "solo", label: "Solo" },
+  { key: "adventure", label: "Adventure" },
+  { key: "pilgrimage", label: "Pilgrimage" },
+];
+
+const TYPE_LABEL: Record<TripType, string> = {
+  couple: "Couple",
+  family: "Family",
+  group: "Group",
+  solo: "Solo",
+  adventure: "Adventure",
+  pilgrimage: "Pilgrimage",
+};
+
+interface Tour {
+  id: string;
+  name: string;
+  em: string;
+  img: string;
+  days: number;
+  price: number;
+  types: TripType[];
+  lede: string;
+  highlights: string[];
+  itinerary: { d: string; t: string; desc: string }[];
+}
+
+const TOURS: Tour[] = [
   {
     id: "nainital",
     name: "Nainital",
@@ -16,12 +51,61 @@ const TOURS = [
     img: "/images/travel/IMG_1774.jpg",
     days: 3,
     price: 6500,
-    lede: "Lake walks at first light, sunrise from Tiffin Top, an evening on the boats. Two hill stations in three considered days.",
-    highlights: ["Naina Devi temple", "Tiffin Top", "Bhimtal boat ride", "Mall Road"],
+    types: ["couple", "family"],
+    lede: "Lake walks at first light, the cable car to Snow View, an evening on the boats. Two hill stations in three considered days.",
+    highlights: ["Naina Devi temple", "Snow View cable car", "Bhimtal boat ride", "Mall Road"],
     itinerary: [
-      { d: "Day 1", t: "Drive in & lake evening", desc: "Pickup Haldwani, drive 1.5h to Nainital. Boat ride at golden hour, dinner at the property." },
-      { d: "Day 2", t: "Tiffin Top sunrise & Mall Road", desc: "Early start to Tiffin Top, breakfast on return, free afternoon, evening walk on Mall Road." },
-      { d: "Day 3", t: "Bhimtal & return", desc: "Drive to Bhimtal lake, lunch by water, return to Haldwani by evening." },
+      { d: "Day 1", t: "Drive in & Naini Lake", desc: "Pickup Haldwani, drive 1.5h to Nainital. Boat ride at golden hour, Naina Devi temple and the Tibetan market." },
+      { d: "Day 2", t: "Snow View & sightseeing", desc: "Cable car to Snow View, Cave Garden, Lovers Point and the local round, free evening on Mall Road." },
+      { d: "Day 3", t: "Bhimtal & return", desc: "Bhowali, tea gardens and the Bhimtal lake circuit, return to Haldwani by evening." },
+    ],
+  },
+  {
+    id: "family-bliss",
+    name: "Family",
+    em: "Bliss",
+    img: "/images/travel/IMG_1771.jpg",
+    days: 3,
+    price: 6000,
+    types: ["family"],
+    lede: "Nainital without the noise, at a pace that suits children and grandparents alike. Lakeside cottage, gentle days, one easy trip to Bhimtal.",
+    highlights: ["Lake-view cottage", "Pony rides", "Echo Point walk", "Bhimtal picnic"],
+    itinerary: [
+      { d: "Day 1", t: "Soft arrival", desc: "Check in to a lakeside cottage with a lake-view balcony, evening boat ride, and a Mall Road stroll with an ice-cream stop." },
+      { d: "Day 2", t: "Gentle mix", desc: "Morning cable car to Snow View, short pony rides for the children, lunch at the cottage, easy garden walk to Echo Point." },
+      { d: "Day 3", t: "Calm exit", desc: "Cab to Bhimtal, feeding the fish at the dock, a packed picnic lunch, and back to Nainital by noon for checkout." },
+    ],
+  },
+  {
+    id: "solo-serenity",
+    name: "Solo",
+    em: "Serenity",
+    img: "/images/travel/IMG_1763.png",
+    days: 3,
+    price: 7500,
+    types: ["solo"],
+    lede: "No guide, no group, nothing forced. A private cottage by the lake, an unhurried lake walk, and as much or as little as you feel like doing.",
+    highlights: ["Private AC cottage", "Solo sunset boat", "2 km lake circuit", "Zero forced plans"],
+    itinerary: [
+      { d: "Day 1", t: "Arrival & anchor", desc: "Settle in to a private cottage with lake views, a solo sunset boat ride, and herbal chai on the Mallital promenade." },
+      { d: "Day 2", t: "Breathe easy", desc: "An easy 2 km lake-circuit walk, fresh apple cider at a roadside stall, and an afternoon entirely your own." },
+      { d: "Day 3", t: "Bhimtal drift", desc: "A short cab to Bhimtal, leisure by the dock, back to Nainital by noon, unhurried checkout." },
+    ],
+  },
+  {
+    id: "gangbaaz",
+    name: "Gangbaaz",
+    em: "Adventure",
+    img: "/images/travel/IMG_1767.jpg",
+    days: 3,
+    price: 8500,
+    types: ["adventure", "group"],
+    lede: "For the ones who came to do, not just to look. Tandem paragliding, a Tiffin Top trek, ridge cycling and a barbecue night — three days at full tilt.",
+    highlights: ["Tandem paragliding", "Tiffin Top trek", "Ridge cycling", "BBQ + zip-line"],
+    itinerary: [
+      { d: "Day 1", t: "Crash & launch", desc: "Check in to a lakeside guesthouse, tandem paragliding over Naini Lake, then an evening out on Mall Road." },
+      { d: "Day 2", t: "Grind light", desc: "A 40-min trek to Tiffin Top, ropeway descent, afternoon ridge cycling, and a self-grilled BBQ dinner at the lodge." },
+      { d: "Day 3", t: "Bhimtal blitz", desc: "Motor-boating at Bhimtal, optional zip-lining over the water, an apple-orchard photo stop, checkout by 1 PM." },
     ],
   },
   {
@@ -31,12 +115,54 @@ const TOURS = [
     img: "/images/travel/IMG_1768.jpg",
     days: 3,
     price: 8000,
-    lede: "Two safaris, one bird-watching morning. Forest stay, packed lunches, vetted naturalist guide.",
+    types: ["family", "group"],
+    lede: "Two safaris, one bird-watching morning. Forest stay, packed lunches, a vetted naturalist guide.",
     highlights: ["Dhikala zone safari", "Bijrani drive", "Corbett museum", "Riverside breakfast"],
     itinerary: [
       { d: "Day 1", t: "Arrival & evening safari", desc: "Drive to Corbett, lunch at riverside, evening jeep safari (Bijrani)." },
       { d: "Day 2", t: "Full-day Dhikala", desc: "Pre-dawn entry to Dhikala zone, breakfast in the forest, return for siesta, evening bird walk." },
       { d: "Day 3", t: "Museum & return", desc: "Visit Corbett museum, lazy brunch, drive back by afternoon." },
+    ],
+  },
+  {
+    id: "kumaon-grand",
+    name: "Nainital · Ranikhet",
+    em: "· Corbett",
+    img: "/images/travel/IMG_1773.jpg",
+    days: 7,
+    price: 18000,
+    types: ["group"],
+    lede: "The grand Kumaon loop in seven unhurried days — the lakes of Nainital, the vintage-cantonment calm of Ranikhet, and the wild edges of Jim Corbett.",
+    highlights: ["Himalaya Darshan", "Chaubatia Gardens", "Ranikhet Golf Course", "Corbett Falls"],
+    itinerary: [
+      { d: "Day 1", t: "Arrival at Nainital", desc: "Pickup at Kathgodam or Nainital, hotel check-in, easy first evening on Mall Road and the Tibetan market." },
+      { d: "Day 2", t: "Nainital sightseeing", desc: "Himalaya Darshan, Kilbury forest, tea at Pangot, Cave Garden, cable car to Snow View, boating and Hanuman Garhi." },
+      { d: "Day 3", t: "On to Ranikhet", desc: "Drive to Ranikhet and settle into its old-world, vintage-military calm and wide Himalayan views." },
+      { d: "Day 4", t: "Ranikhet day", desc: "War Memorial Museum, Chaubatia Gardens and the famous Golf Course, ending with sunset over the snow peaks." },
+      { d: "Day 5", t: "Ranikhet to Corbett", desc: "Scenic drive to Jim Corbett, check in to a jungle resort, evening riverside walk along the Kosi." },
+      { d: "Day 6", t: "Corbett day", desc: "Optional early-morning jungle safari, Corbett Falls and the Sitabani forest, free evening." },
+      { d: "Day 7", t: "Departure", desc: "Breakfast and the return drive, drop to your station or onward route." },
+    ],
+  },
+  {
+    id: "kumaon-darshan",
+    name: "Kumaon",
+    em: "Darshan",
+    img: "/images/travel/IMG_1765.jpg",
+    days: 8,
+    price: 22000,
+    types: ["group", "pilgrimage"],
+    lede: "The deep eight-day Kumaon circuit — Kausani, Chaukori, Munsiyari, the caves of Patal Bhuvaneshwar, and the ancient temples of Jageshwar and Almora.",
+    highlights: ["Kainchi Dham", "Birthi Falls", "Patal Bhuvaneshwar", "Jageshwar Dham"],
+    itinerary: [
+      { d: "Day 1", t: "Nainital to Kausani", desc: "Via Bhowali, Kainchi Dham and Ranikhet — Himalaya viewpoint, Kalika temple, shawl factory. Night at Kausani." },
+      { d: "Day 2", t: "Kausani to Chaukori", desc: "Tea gardens, the ancient Baijnath temple and Bageshwar en route to Chaukori." },
+      { d: "Day 3", t: "Chaukori to Munsiyari", desc: "Through Thal and the high Birthi Falls to the trekking town of Munsiyari." },
+      { d: "Day 4", t: "Munsiyari", desc: "Nanda Devi temple and the tribal heritage museum, the Panchachuli peaks in view." },
+      { d: "Day 5", t: "Patal Bhuvaneshwar", desc: "Drive to the limestone cave-temple of Patal Bhuvaneshwar." },
+      { d: "Day 6", t: "To Jageshwar", desc: "The Jageshwar Dham complex — over a hundred ancient stone temples in deodar forest." },
+      { d: "Day 7", t: "Jageshwar to Almora", desc: "Lakhudiyar's prehistoric cave paintings and the Chitai Golu Devta temple." },
+      { d: "Day 8", t: "Almora to Kathgodam", desc: "Via Ghorakhal, Bhimtal and Sattal for the drive back, drop at Kathgodam." },
     ],
   },
   {
@@ -46,7 +172,8 @@ const TOURS = [
     img: "/images/travel/IMG_1770.jpg",
     days: 4,
     price: 12000,
-    lede: "A measured pilgrimage. Vehicle to Gaurikund, ponies and porters arranged, two nights at altitude.",
+    types: ["pilgrimage"],
+    lede: "A measured pilgrimage. Vehicle to Gaurikund, ponies and porters arranged, two nights at altitude, and a turn to Badrinath and Mana.",
     highlights: ["Gaurikund base", "Kedarnath darshan", "Badrinath & Mana", "Sonprayag camp"],
     itinerary: [
       { d: "Day 1", t: "Drive to Sonprayag", desc: "Long drive day, overnight at Sonprayag camp." },
@@ -55,6 +182,26 @@ const TOURS = [
       { d: "Day 4", t: "Badrinath & Mana", desc: "Onward to Badrinath darshan and the last Indian village at Mana, then drive back." },
     ],
   },
+];
+
+// Add-on experiences we arrange on any trip — borrowed from how the region's
+// operators package adventure, but bookable through our own desk.
+const EXPERIENCES = [
+  { k: "Air", name: "Paragliding", desc: "Tandem flights over Naini Lake — no experience needed, just nerve." },
+  { k: "Trail", name: "Trekking", desc: "Tiffin Top, Land's End and the Pangot ridges, at a pace that suits you." },
+  { k: "Wild", name: "Jungle Safari", desc: "Jeep safaris into Corbett's Dhikala and Bijrani zones with a naturalist." },
+  { k: "Water", name: "Boating", desc: "Paddle and motor boats on Naini, Bhimtal and Sattal lakes." },
+  { k: "Night", name: "Camping & BBQ", desc: "Riverside and ridge camps with a self-grilled barbecue evening." },
+  { k: "Ride", name: "Ropeway & Cable Car", desc: "The Snow View aerial ropeway and lakeside cable cars." },
+  { k: "Wheels", name: "Cycling", desc: "Easy ridge rides around the lake for the restless." },
+  { k: "Rush", name: "Zip-lining", desc: "Optional zips strung over the water at Bhimtal." },
+];
+
+// The map we actually cover, from the lakes out to the high border villages.
+const DESTINATIONS = [
+  "Nainital", "Bhimtal", "Sattal", "Kainchi Dham", "Ranikhet", "Almora",
+  "Kausani", "Chaukori", "Munsiyari", "Jageshwar", "Patal Bhuvaneshwar",
+  "Jim Corbett", "Kedarnath & Badrinath", "Mana Village",
 ];
 
 // Our own vehicles, photographed on the road over the years. Every car here is
@@ -91,6 +238,10 @@ const MOMENTS = [
 
 export default function TravelPage() {
   const [openId, setOpenId] = useState<string | null>(TOURS[0].id);
+  const [activeType, setActiveType] = useState<"all" | TripType>("all");
+
+  const filteredTours =
+    activeType === "all" ? TOURS : TOURS.filter((t) => t.types.includes(activeType));
 
   return (
     <SiteShell>
@@ -107,8 +258,9 @@ export default function TravelPage() {
             <span className="kb-eyebrow">The Travel Desk</span>
             <h1>Routes through <em>the foothills</em>.</h1>
             <p>
-              Driving Kumaon since 1998 — Char Dham, Corbett, Nainital and back.
-              Our own vehicles, our own drivers, no rushed itineraries.
+              Driving Kumaon since 1998 — couple escapes, family trips, group tours,
+              solo retreats and the Char Dham road. Our own vehicles, our own drivers,
+              no rushed itineraries.
             </p>
           </Reveal>
         </div>
@@ -118,17 +270,36 @@ export default function TravelPage() {
         <div className="kb-container">
           <Reveal>
             <span className="kb-eyebrow">Signature Journeys</span>
-            <h2>Packages we&apos;ve <em>driven ourselves</em>.</h2>
+            <h2>Pick the trip that&apos;s <em>yours</em>.</h2>
+            <p>
+              Packages we&apos;ve driven ourselves, sorted by who&apos;s travelling.
+              Every price below is the final, GST-inclusive fare per person.
+            </p>
           </Reveal>
-          <div style={{ display: "grid", gap: 28, marginTop: 32 }}>
-            {TOURS.map((t, i) => {
+
+          <Reveal className="filter-bar" delay={0.05}>
+            {TRIP_TYPES.map((tt) => (
+              <button
+                key={tt.key}
+                className={`filter-chip ${activeType === tt.key ? "is-active" : ""}`}
+                onClick={() => setActiveType(tt.key)}
+              >
+                {tt.label}
+              </button>
+            ))}
+          </Reveal>
+
+          <div style={{ display: "grid", gap: 28, marginTop: 36 }}>
+            {filteredTours.map((t, i) => {
               const open = openId === t.id;
               return (
                 <Reveal key={t.id} delay={i * 0.06}>
                   <article className="room-card" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr" }}>
                     <div className="room-card__img" style={{ backgroundImage: `url(${t.img})`, aspectRatio: "auto" }} />
                     <div className="room-card__body">
-                      <div className="room-card__label">{t.days} days · per person</div>
+                      <div className="room-card__label">
+                        {t.days} days · {t.types.map((ty) => TYPE_LABEL[ty]).join(" · ")}
+                      </div>
                       <h3 className="room-card__name">{t.name} <em>{t.em}</em></h3>
                       <p className="room-card__lede">{t.lede}</p>
                       <ul className="room-card__amenities">
@@ -168,6 +339,46 @@ export default function TravelPage() {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      <section className="sect">
+        <div className="kb-container">
+          <Reveal>
+            <span className="kb-eyebrow">Things To Do</span>
+            <h2>Experiences we <em>arrange</em>.</h2>
+            <p>
+              Add any of these to a package, or build a day around them. We book the
+              slots, sort the gear, and put a driver on it.
+            </p>
+          </Reveal>
+          <div className="exp-grid">
+            {EXPERIENCES.map((e, i) => (
+              <Reveal key={e.name} delay={i * 0.04} as="article" className="exp-item">
+                <div className="k">{e.k}</div>
+                <h4>{e.name}</h4>
+                <p>{e.desc}</p>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="sect">
+        <div className="kb-container">
+          <Reveal>
+            <span className="kb-eyebrow">Where We Go</span>
+            <h2>The map we <em>know by heart</em>.</h2>
+            <p>
+              From the lakes around Nainital out to the high border villages — name a
+              corner of Kumaon and chances are we&apos;ve parked there.
+            </p>
+          </Reveal>
+          <Reveal className="dest-tags" delay={0.05}>
+            {DESTINATIONS.map((d) => (
+              <span key={d} className="dest-tag">{d}</span>
+            ))}
+          </Reveal>
         </div>
       </section>
 

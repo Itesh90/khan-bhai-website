@@ -20,10 +20,15 @@ const ROOMS: Record<string, { name: string; img: string; price: number; type: It
   deluxe:    { name: "Deluxe Room",            img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80", price: 2730, type: "room" },
   balcony:   { name: "Room with Balcony View", img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=900&q=80", price: 3360, type: "room" },
   suite:     { name: "Sweet Room",             img: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=900&q=80", price: 7140, type: "room" },
-  nainital:  { name: "Nainital & Bhimtal",     img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1200&q=80", price: 6500, type: "tour" },
-  corbett:   { name: "Jim Corbett",            img: "https://images.unsplash.com/photo-1606298855672-3efb63017be8?w=1200&q=80", price: 8000, type: "tour" },
-  kedarnath: { name: "Kedarnath Yatra",        img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200&q=80", price: 12000, type: "tour" },
-  restaurant: { name: "Restaurant Table",       img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&q=80", price: 200, type: "table" },
+  nainital:         { name: "Nainital & Bhimtal",            img: "/images/travel/IMG_1774.jpg", price: 6500, type: "tour" },
+  corbett:          { name: "Jim Corbett",                   img: "/images/travel/IMG_1768.jpg", price: 8000, type: "tour" },
+  kedarnath:        { name: "Char Dham & Kedarnath",         img: "/images/travel/IMG_1770.jpg", price: 12000, type: "tour" },
+  "family-bliss":   { name: "Nainital Family Bliss",         img: "/images/travel/IMG_1771.jpg", price: 6000, type: "tour" },
+  "solo-serenity":  { name: "Solo Serenity Retreat",         img: "/images/travel/IMG_1763.png", price: 7500, type: "tour" },
+  gangbaaz:         { name: "Gangbaaz Adventure Pack",       img: "/images/travel/IMG_1767.jpg", price: 8500, type: "tour" },
+  "kumaon-grand":   { name: "Nainital · Ranikhet · Corbett", img: "/images/travel/IMG_1773.jpg", price: 18000, type: "tour" },
+  "kumaon-darshan": { name: "Kumaon Darshan",                img: "/images/travel/IMG_1765.jpg", price: 22000, type: "tour" },
+  restaurant:       { name: "Restaurant Table",              img: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&q=80", price: 200, type: "table" },
 };
 
 // Scooter + taxi entries are sourced from the SAME shared catalog the travel

@@ -253,10 +253,10 @@ async function main() {
 
   const kedarnathTour = await prisma.tour.upsert({
     where: { id: "kedarnath" },
-    update: { name: "Kedarnath Yatra", price: 12000, duration: 4, available: true },
+    update: { name: "Char Dham & Kedarnath", price: 12000, duration: 4, available: true },
     create: {
       id: "kedarnath",
-      name: "Kedarnath Yatra",
+      name: "Char Dham & Kedarnath",
       description:
         "A spiritually enriching 4-day pilgrimage to one of India's holiest Shiva temples. Experience the majestic Himalayas, sacred rituals, and profound inner peace.",
       destination: "Kedarnath, Uttarakhand",
@@ -304,8 +304,268 @@ async function main() {
     },
   });
 
+  // ── 3b. Kumaon traveller-type packages ───────────────────────────────────────
+  // Segmented by who's travelling (family / solo / adventure / group) the way
+  // peer operators in the region package their trips. Ids are the slug the
+  // public catalogue links with (?type=tour&id=…) and match the tour_id regex.
+
+  const familyBlissTour = await prisma.tour.upsert({
+    where: { id: "family-bliss" },
+    update: { name: "Nainital Family Bliss", price: 6000, duration: 3, available: true },
+    create: {
+      id: "family-bliss",
+      name: "Nainital Family Bliss",
+      description:
+        "Nainital without the noise, at a pace that suits children and grandparents alike. Lakeside cottage, gentle sightseeing, and an easy day trip to Bhimtal.",
+      destination: "Nainital & Bhimtal, Uttarakhand",
+      price: 6000,
+      duration: 3,
+      maxGuests: 18,
+      includes: ["Breakfast", "Transport", "Cottage Stay", "Boat Ride"],
+      images: ["/images/travel/IMG_1771.jpg"],
+      itinerary: [
+        {
+          day: 1,
+          title: "Soft Arrival",
+          description:
+            "Check in to a lakeside cottage with a lake-view balcony, evening boat ride on Naini Lake, and a Mall Road stroll with an ice-cream stop.",
+        },
+        {
+          day: 2,
+          title: "Gentle Mix",
+          description:
+            "Morning cable-car to Snow View, short pony rides for the children, lunch back at the cottage, and an easy garden walk to Echo Point.",
+        },
+        {
+          day: 3,
+          title: "Calm Exit",
+          description:
+            "Cab to Bhimtal, feeding the fish at the dock, a packed picnic lunch by the water, and return to Nainital by noon for checkout.",
+        },
+      ],
+      available: true,
+    },
+  });
+
+  const soloSerenityTour = await prisma.tour.upsert({
+    where: { id: "solo-serenity" },
+    update: { name: "Solo Serenity Retreat", price: 7500, duration: 3, available: true },
+    create: {
+      id: "solo-serenity",
+      name: "Solo Serenity Retreat",
+      description:
+        "No guide, no group, nothing forced. A private cottage by the lake, an unhurried lake walk, and as much or as little as you feel like doing.",
+      destination: "Nainital & Bhimtal, Uttarakhand",
+      price: 7500,
+      duration: 3,
+      // Marketed as a solo retreat, but the per-person rate also covers a small
+      // group who want the same quiet itinerary — capped low to keep it intimate.
+      maxGuests: 4,
+      includes: ["Private AC Cottage", "Breakfast", "One Boat Ride", "Local Cab"],
+      images: ["/images/travel/IMG_1763.png"],
+      itinerary: [
+        {
+          day: 1,
+          title: "Arrival & Anchor",
+          description:
+            "Settle in to a private AC cottage with lake views, a solo sunset boat ride on Naini Lake, and herbal chai on the Mallital promenade.",
+        },
+        {
+          day: 2,
+          title: "Breathe Easy",
+          description:
+            "An easy 2 km lake-circuit walk in the morning, fresh apple cider at a roadside stall, and an afternoon entirely your own — read, write, or simply rest.",
+        },
+        {
+          day: 3,
+          title: "Bhimtal Drift",
+          description:
+            "A short cab transfer to Bhimtal, leisure time by the dock, return to Nainital by noon, and an unhurried checkout.",
+        },
+      ],
+      available: true,
+    },
+  });
+
+  const gangbaazTour = await prisma.tour.upsert({
+    where: { id: "gangbaaz" },
+    update: { name: "Gangbaaz Adventure Pack", price: 8500, duration: 3, available: true },
+    create: {
+      id: "gangbaaz",
+      name: "Gangbaaz Adventure Pack",
+      description:
+        "For the ones who came to do, not just to look. Tandem paragliding, a Tiffin Top trek, ridge cycling, and a BBQ night — three days at full tilt.",
+      destination: "Nainital & Bhimtal, Uttarakhand",
+      price: 8500,
+      duration: 3,
+      maxGuests: 16,
+      includes: [
+        "Shared AC Stay",
+        "Breakfast + BBQ Dinner",
+        "Cabs",
+        "Paragliding (1 slot / 2 people)",
+        "Boating",
+        "Ropeway",
+      ],
+      images: ["/images/travel/IMG_1767.jpg"],
+      itinerary: [
+        {
+          day: 1,
+          title: "Crash & Launch",
+          description:
+            "Check in to a lakeside guesthouse, then a tandem paragliding flight over Naini Lake, followed by an evening out on Mall Road.",
+        },
+        {
+          day: 2,
+          title: "Grind Light",
+          description:
+            "A 40-minute trek to Tiffin Top with summit photos, ropeway descent, afternoon cycling around the ridge, and a self-grilled BBQ dinner at the lodge.",
+        },
+        {
+          day: 3,
+          title: "Bhimtal Blitz",
+          description:
+            "Cab to Bhimtal for motor-boating, optional zip-lining over the water, an apple-orchard photo stop, and checkout by 1 PM.",
+        },
+      ],
+      available: true,
+    },
+  });
+
+  const kumaonGrandTour = await prisma.tour.upsert({
+    where: { id: "kumaon-grand" },
+    update: { name: "Nainital · Ranikhet · Corbett", price: 18000, duration: 7, available: true },
+    create: {
+      id: "kumaon-grand",
+      name: "Nainital · Ranikhet · Corbett",
+      description:
+        "The grand Kumaon loop in seven unhurried days — the lakes of Nainital, the vintage cantonment calm of Ranikhet, and the wild edges of Jim Corbett.",
+      destination: "Nainital · Ranikhet · Corbett, Uttarakhand",
+      price: 18000,
+      duration: 7,
+      maxGuests: 14,
+      includes: ["Daily Breakfast & Dinner", "All Transport", "Hotels", "Guide"],
+      images: ["/images/travel/IMG_1773.jpg"],
+      itinerary: [
+        {
+          day: 1,
+          title: "Arrival at Kathgodam / Nainital",
+          description:
+            "Pickup at Kathgodam or Nainital, hotel check-in, and an easy first evening on Mall Road and the Tibetan market.",
+        },
+        {
+          day: 2,
+          title: "Nainital Sightseeing",
+          description:
+            "Himalaya Darshan viewpoint, Kilbury forest, a tea break at Pangot, Cave Garden, cable-car to Snow View, boating on Naini Lake, and Hanuman Garhi.",
+        },
+        {
+          day: 3,
+          title: "Nainital to Ranikhet",
+          description:
+            "Drive to Ranikhet and settle in to its old-world, vintage-military calm and wide Himalayan views.",
+        },
+        {
+          day: 4,
+          title: "Ranikhet Exploration",
+          description:
+            "War Memorial Museum, Chaubatia Gardens, and the famous Golf Course, ending with sunset over the snow peaks.",
+        },
+        {
+          day: 5,
+          title: "Ranikhet to Corbett",
+          description:
+            "Long, scenic drive to Jim Corbett, check in to a jungle resort, and an evening riverside walk along the Kosi.",
+        },
+        {
+          day: 6,
+          title: "Corbett Day",
+          description:
+            "Optional early-morning jungle safari (booked in advance), Corbett Falls, and the Sitabani forest, with a free evening.",
+        },
+        {
+          day: 7,
+          title: "Departure",
+          description:
+            "Breakfast and the return drive, with drop to your station or onward route.",
+        },
+      ],
+      available: true,
+    },
+  });
+
+  const kumaonDarshanTour = await prisma.tour.upsert({
+    where: { id: "kumaon-darshan" },
+    update: { name: "Kumaon Darshan", price: 22000, duration: 8, available: true },
+    create: {
+      id: "kumaon-darshan",
+      name: "Kumaon Darshan",
+      description:
+        "The deep eight-day Kumaon circuit — Kausani, Chaukori, Munsiyari, the caves of Patal Bhuvaneshwar, and the ancient temples of Jageshwar and Almora.",
+      destination: "Kausani · Munsiyari · Jageshwar · Almora, Uttarakhand",
+      price: 22000,
+      duration: 8,
+      maxGuests: 14,
+      includes: ["Daily Breakfast & Dinner", "All Transport", "Hotels", "Temple Guide"],
+      images: ["/images/travel/IMG_1765.jpg"],
+      itinerary: [
+        {
+          day: 1,
+          title: "Nainital to Kausani",
+          description:
+            "Via Bhowali, Kainchi Dham, and Ranikhet (Himalaya viewpoint, Kalika temple, shawl factory). Night halt at Kausani.",
+        },
+        {
+          day: 2,
+          title: "Kausani to Chaukori",
+          description:
+            "Tea gardens, the ancient Baijnath temple, and Bageshwar en route to Chaukori. Night halt at Chaukori.",
+        },
+        {
+          day: 3,
+          title: "Chaukori to Munsiyari",
+          description:
+            "Through Thal and the high Birthi Falls to the trekking town of Munsiyari. Night halt at Munsiyari.",
+        },
+        {
+          day: 4,
+          title: "Munsiyari Sightseeing",
+          description:
+            "Nanda Devi temple and the tribal heritage museum, with the Panchachuli peaks in view. Night halt at Munsiyari.",
+        },
+        {
+          day: 5,
+          title: "Munsiyari to Patal Bhuvaneshwar",
+          description:
+            "Drive to the limestone cave-temple of Patal Bhuvaneshwar. Night halt nearby.",
+        },
+        {
+          day: 6,
+          title: "To Jageshwar",
+          description:
+            "The Jageshwar Dham complex of over a hundred ancient stone temples set in deodar forest. Night halt at Jageshwar.",
+        },
+        {
+          day: 7,
+          title: "Jageshwar to Almora",
+          description:
+            "Lakhudiyar's prehistoric cave paintings and the Chitai Golu Devta temple. Night halt at Almora.",
+        },
+        {
+          day: 8,
+          title: "Almora to Kathgodam",
+          description:
+            "Via Ghorakhal, Bhimtal, and Sattal for the drive back, with drop at Kathgodam.",
+        },
+      ],
+      available: true,
+    },
+  });
+
   console.log(
-    `  ✅  Tours: ${nainitalTour.name}, ${corbettTour.name}, ${kedarnathTour.name}`
+    `  ✅  Tours: ${nainitalTour.name}, ${corbettTour.name}, ${kedarnathTour.name}, ` +
+      `${familyBlissTour.name}, ${soloSerenityTour.name}, ${gangbaazTour.name}, ` +
+      `${kumaonGrandTour.name}, ${kumaonDarshanTour.name}`
   );
 
   // ── 4. Sample Bookings ────────────────────────────────────────────────────────
