@@ -39,7 +39,7 @@ export const SCOOTER_MODELS: ScooterModel[] = [
     id: "activa",
     name: "Honda Activa 6G",
     dailyRate: 500,
-    img: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=1200&q=80",
+    img: "/images/travel/scooter-activa.jpg",
     blurb:
       "The dependable workhorse of the hills. Automatic, easy to ride, helmet and a full tank to start.",
   },
@@ -47,7 +47,7 @@ export const SCOOTER_MODELS: ScooterModel[] = [
     id: "jupiter",
     name: "TVS Jupiter",
     dailyRate: 450,
-    img: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=1200&q=80",
+    img: "/images/travel/scooter-jupiter.jpg",
     blurb:
       "Light, frugal, and comfortable for two. A favourite for unhurried day trips around the lakes.",
   },
@@ -79,7 +79,7 @@ export const TAXI_ROUTES: TaxiRoute[] = [
     id: "fullday-hire",
     name: "Full-day Cab (8h / 80km)",
     price: 3000,
-    img: "/images/travel/IMG_1794.jpg",
+    img: "/images/travel/taxi-innova.jpg",
     blurb: "A car and driver for the whole day — sightseeing on your own itinerary.",
   },
 ];

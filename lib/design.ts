@@ -60,8 +60,8 @@ export const NAV_LINKS = [
 export const BRAND = {
   name: "Khan Bhai S.",
   tagline: "Hotel · Restaurant · Travel",
-  phone: "+91 98765 43210",
-  whatsapp: "919876543210",
+  phone: "+91 90129 22233",
+  whatsapp: "919012922233",
   email: "stay@khanbhais.in",
   address: {
     line1: "Khan Bhai S.",

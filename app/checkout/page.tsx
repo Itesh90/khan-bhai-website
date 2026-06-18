@@ -17,9 +17,9 @@ import { SCOOTER_MODELS, TAXI_ROUTES } from "@/lib/constants/travel";
 type ItemType = "room" | "tour" | "table" | "scooter" | "taxi";
 
 const ROOMS: Record<string, { name: string; img: string; price: number; type: ItemType }> = {
-  deluxe:    { name: "Deluxe Room",            img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80", price: 2730, type: "room" },
-  balcony:   { name: "Room with Balcony View", img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=900&q=80", price: 3360, type: "room" },
-  suite:     { name: "Sweet Room",             img: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=900&q=80", price: 7140, type: "room" },
+  deluxe:    { name: "Deluxe Room",            img: "/images/stay/deluxe-room.jpg",  price: 2400, type: "room" },
+  balcony:   { name: "Room with Balcony View", img: "/images/stay/balcony-room.jpg", price: 3000, type: "room" },
+  suite:     { name: "Sweet Room",             img: "/images/stay/loft-suite.jpg",   price: 7500, type: "room" },
   nainital:         { name: "Nainital & Bhimtal",            img: "/images/travel/IMG_1774.jpg", price: 6500, type: "tour" },
   corbett:          { name: "Jim Corbett",                   img: "/images/travel/IMG_1768.jpg", price: 8000, type: "tour" },
   kedarnath:        { name: "Char Dham & Kedarnath",         img: "/images/travel/IMG_1770.jpg", price: 12000, type: "tour" },

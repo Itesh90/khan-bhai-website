@@ -224,7 +224,7 @@ export default async function ConfirmationPage({
           <Button variant="primary">Back to Home</Button>
         </Link>
         <a
-          href={`https://wa.me/919876543210?text=${encodeURIComponent(
+          href={`https://wa.me/919012922233?text=${encodeURIComponent(
             "Hi, my booking ref is " + b.bookingRef
           )}`}
           target="_blank"

@@ -214,7 +214,7 @@ export default function RestaurantPage() {
               <Link href="/checkout?id=restaurant">
                 <Button variant="primary" showArrow>Reserve a Table</Button>
               </Link>
-              <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/919012922233" target="_blank" rel="noopener noreferrer">
                 <Button variant="ghost">WhatsApp the Chef</Button>
               </a>
             </div>

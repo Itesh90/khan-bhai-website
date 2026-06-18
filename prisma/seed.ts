@@ -90,7 +90,7 @@ async function main() {
   const deluxeRoom = await prisma.room.upsert({
     where: { id: "deluxe" },
     update: {
-      price: 2730,
+      price: 2400,
       available: true,
     },
     create: {
@@ -98,12 +98,11 @@ async function main() {
       name: "Deluxe Room",
       description:
         "Elegantly furnished deluxe room featuring a relaxing balcony, workspace, and comfortable king bed.",
-      price: 2730,
+      price: 2400,
       maxGuests: 2,
       amenities: ["WiFi", "AC", "TV", "Balcony", "Workspace"],
       images: [
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800",
-        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800",
+        "/images/stay/deluxe-room.jpg",
       ],
       available: true,
     },
@@ -112,7 +111,7 @@ async function main() {
   const premiumSuite = await prisma.room.upsert({
     where: { id: "balcony" },
     update: {
-      price: 3360,
+      price: 3000,
       name: "Room with Balcony View",
       available: true,
     },
@@ -120,13 +119,13 @@ async function main() {
       id: "balcony",
       name: "Room with Balcony View",
       description:
-        "Premium room with a beautiful sit-out balcony offering stunning views of the valley.",
-      price: 3360,
+        "Premium room with a vaulted ceiling and a beautiful sit-out balcony offering stunning views of the valley.",
+      price: 3000,
       maxGuests: 2,
       amenities: ["WiFi", "AC", "TV", "Balcony View", "Mini Bar"],
       images: [
-        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800",
-        "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800",
+        "/images/stay/balcony-room.jpg",
+        "/images/stay/balcony-view-2.jpg",
       ],
       available: true,
     },
@@ -135,7 +134,7 @@ async function main() {
   const familyRoom = await prisma.room.upsert({
     where: { id: "suite" },
     update: {
-      price: 7140,
+      price: 7500,
       name: "Sweet Room",
       available: true,
     },
@@ -143,8 +142,8 @@ async function main() {
       id: "suite",
       name: "Sweet Room",
       description:
-        "Our flagship luxury suite room with fine wood finishes, private balcony, and separate lounge area.",
-      price: 7140,
+        "Spacious split-level loft with a private wooden staircase, four beds, a sit-out balcony, and a separate lounge area.",
+      price: 7500,
       maxGuests: 4,
       amenities: [
         "WiFi",
@@ -152,11 +151,11 @@ async function main() {
         "TV",
         "Private Balcony",
         "Lounge Area",
-        "Four-poster Bed",
+        "Four beds",
       ],
       images: [
-        "https://images.unsplash.com/photo-1586611292717-f828b167408c?w=800",
-        "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800",
+        "/images/stay/loft-suite.jpg",
+        "/images/stay/loft-suite-2.jpg",
       ],
       available: true,
     },
