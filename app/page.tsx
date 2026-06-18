@@ -52,10 +52,10 @@ const PILLARS = [
 // Featured dishes are pulled from the live restaurant menu (MENU_SECTIONS in
 // app/restaurant/page.tsx) — keep these names + prices in sync if the menu shifts.
 const DISHES = [
-  { name: "Murg", em: "Mussallam", img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&q=80", veg: "Non-veg · House Special", price: "₹1,250" },
-  { name: "Mutton", em: "Rogan Josh", img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&q=80", veg: "Non-veg · Awadhi", price: "₹390 / ₹780" },
-  { name: "Shahi", em: "Paneer", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80", veg: "Veg · Mughlai", price: "₹270" },
-  { name: "Veg", em: "Biryani", img: "https://images.unsplash.com/photo-1633945274405-b6c8e4c43c5d?w=600&q=80", veg: "Veg · Awadhi", price: "₹220" },
+  { name: "Murg", em: "Mussallam", img: "/images/menu/murg-mussallam.jpg", veg: "Non-veg · House Special", price: "₹1,250" },
+  { name: "Mutton", em: "Rogan Josh", img: "/images/menu/mutton-rogan-josh.jpg", veg: "Non-veg · Awadhi", price: "₹390 / ₹780" },
+  { name: "Shahi", em: "Paneer", img: "/images/menu/shahi-paneer.jpg", veg: "Veg · Mughlai", price: "₹270" },
+  { name: "Veg", em: "Biryani", img: "/images/menu/veg-biryani.jpg", veg: "Veg · Awadhi", price: "₹220" },
 ];
 
 const DESTS = [
