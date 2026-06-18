@@ -12,7 +12,11 @@ const ROOMS = [
     label: "Category I",
     name: "Deluxe",
     em: "Room",
-    img: "/images/stay/deluxe-room.jpg",
+    images: [
+      "/images/stay/deluxe-room.jpg",
+      "/images/stay/deluxe-room-2.jpg",
+      "/images/stay/deluxe-room-3.jpg",
+    ],
     lede: "King bed with an extra single, sit-out balcony and a working desk. Comfortable and well-lit.",
     amenities: ["King bed", "Balcony", "AC", "Coffee", "WiFi", "Workspace"],
     price: 2400,
@@ -23,7 +27,12 @@ const ROOMS = [
     label: "Category II",
     name: "Room with Balcony View",
     em: "",
-    img: "/images/stay/balcony-room.jpg",
+    images: [
+      "/images/stay/balcony-room.jpg",
+      "/images/stay/balcony-room-2.jpg",
+      "/images/stay/balcony-room-3.jpg",
+      "/images/stay/balcony-room-4.jpg",
+    ],
     lede: "Premium room with a vaulted ceiling and a beautiful sit-out balcony offering views of the valley.",
     amenities: ["King bed", "Valley View Balcony", "AC", "Bathtub", "Mini bar", "WiFi"],
     price: 3000,
@@ -34,7 +43,10 @@ const ROOMS = [
     label: "Category III",
     name: "Sweet",
     em: "Room",
-    img: "/images/stay/loft-suite.jpg",
+    images: [
+      "/images/stay/loft-suite.jpg",
+      "/images/stay/loft-suite-2.jpg",
+    ],
     lede: "Spacious split-level loft with a private wooden staircase, four beds and a sit-out balcony — ideal for families.",
     amenities: ["4 beds", "Duplex loft", "Private balcony", "AC", "Lounge sofa", "WiFi"],
     price: 7500,
@@ -48,6 +60,56 @@ const FILTERS = [
   { key: "3", label: "3 Guests" },
   { key: "4", label: "4+ Guests" },
 ];
+
+function RoomGallery({ images, name }: { images: string[]; name: string }) {
+  const [idx, setIdx] = useState(0);
+  const go = (d: number) =>
+    setIdx((p) => (p + d + images.length) % images.length);
+
+  return (
+    <div className="room-card__gallery">
+      {images.map((src, i) => (
+        <div
+          key={src}
+          className="room-card__img"
+          style={{ backgroundImage: `url(${src})`, opacity: i === idx ? 1 : 0 }}
+          aria-hidden={i !== idx}
+        />
+      ))}
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            className="room-gallery-nav room-gallery-nav--prev"
+            onClick={() => go(-1)}
+            aria-label={`Previous photo of ${name}`}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="room-gallery-nav room-gallery-nav--next"
+            onClick={() => go(1)}
+            aria-label={`Next photo of ${name}`}
+          >
+            ›
+          </button>
+          <div className="room-gallery-dots">
+            {images.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                className={`room-gallery-dot ${i === idx ? "is-active" : ""}`}
+                onClick={() => setIdx(i)}
+                aria-label={`Show photo ${i + 1} of ${name}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function StayPage() {
   const [filter, setFilter] = useState("all");
@@ -92,7 +154,7 @@ export default function StayPage() {
             {filtered.map((r, i) => (
               <Reveal key={r.id} delay={i * 0.05} as="article">
                 <div className="room-card">
-                  <div className="room-card__img" style={{ backgroundImage: `url(${r.img})` }} />
+                  <RoomGallery images={r.images} name={r.name} />
                   <div className="room-card__body">
                     <div className="room-card__label">{r.label} · sleeps {r.capacity}</div>
                     <h3 className="room-card__name">{r.name} <em>{r.em}</em></h3>

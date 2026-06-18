@@ -7,14 +7,14 @@ import Ornament from "@/components/ui/Ornament";
 const PILLARS = [
   {
     num: "No. 01",
-    img: "/images/stay/room-suite.jpg",
+    img: "/images/stay/loft-suite.jpg",
     name: "Stay",
     lede:
       "Twenty-eight rooms across three categories — each finished in walnut, brass and hand-loomed Kumaoni textiles.",
     list: [
-      ["Deluxe Room", "₹2,730"],
-      ["Balcony View Room", "₹3,360"],
-      ["Sweet Room", "₹7,140"],
+      ["Deluxe Room", "₹2,400"],
+      ["Balcony View Room", "₹3,000"],
+      ["Sweet Room", "₹7,500"],
     ] as [string, string][],
     cta: "Browse Rooms",
     href: "/stay",

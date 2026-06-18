@@ -103,6 +103,8 @@ async function main() {
       amenities: ["WiFi", "AC", "TV", "Balcony", "Workspace"],
       images: [
         "/images/stay/deluxe-room.jpg",
+        "/images/stay/deluxe-room-2.jpg",
+        "/images/stay/deluxe-room-3.jpg",
       ],
       available: true,
     },
@@ -125,7 +127,9 @@ async function main() {
       amenities: ["WiFi", "AC", "TV", "Balcony View", "Mini Bar"],
       images: [
         "/images/stay/balcony-room.jpg",
-        "/images/stay/balcony-view-2.jpg",
+        "/images/stay/balcony-room-2.jpg",
+        "/images/stay/balcony-room-3.jpg",
+        "/images/stay/balcony-room-4.jpg",
       ],
       available: true,
     },
