@@ -294,8 +294,10 @@ export default function TravelPage() {
               const open = openId === t.id;
               return (
                 <Reveal key={t.id} delay={i * 0.06}>
-                  <article className="room-card" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr" }}>
-                    <div className="room-card__img" style={{ backgroundImage: `url(${t.img})`, aspectRatio: "auto" }} />
+                  <article className="room-card tour-card">
+                    <div className="tour-card__media">
+                      <div className="room-card__img" style={{ backgroundImage: `url(${t.img})` }} />
+                    </div>
                     <div className="room-card__body">
                       <div className="room-card__label">
                         {t.days} days · {t.types.map((ty) => TYPE_LABEL[ty]).join(" · ")}
@@ -417,7 +419,9 @@ export default function TravelPage() {
             {SCOOTER_MODELS.map((s, i) => (
               <Reveal key={s.id} delay={i * 0.06} as="article">
                 <div className="room-card">
-                  <div className="room-card__img" style={{ backgroundImage: `url(${s.img})` }} />
+                  <div className="room-card__gallery">
+                    <div className="room-card__img" style={{ backgroundImage: `url(${s.img})` }} />
+                  </div>
                   <div className="room-card__body">
                     <div className="room-card__label">Per day · helmet included</div>
                     <h3 className="room-card__name">{s.name}</h3>
@@ -452,7 +456,9 @@ export default function TravelPage() {
             {TAXI_ROUTES.map((r, i) => (
               <Reveal key={r.id} delay={i * 0.06} as="article">
                 <div className="room-card">
-                  <div className="room-card__img" style={{ backgroundImage: `url(${r.img})` }} />
+                  <div className="room-card__gallery">
+                    <div className="room-card__img" style={{ backgroundImage: `url(${r.img})` }} />
+                  </div>
                   <div className="room-card__body">
                     <div className="room-card__label">Fixed fare · private cab</div>
                     <h3 className="room-card__name">{r.name}</h3>

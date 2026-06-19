@@ -245,6 +245,7 @@ button { font-family: inherit; cursor: pointer; border: 0; background: none; col
   top: 0;
   z-index: 50;
   background: rgba(13,13,13,0.92);
+  -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   border-bottom: 0.5px solid rgba(201,168,76,0.18);
 }
@@ -604,6 +605,7 @@ button { font-family: inherit; cursor: pointer; border: 0; background: none; col
   background: rgba(13,13,13,0.85);
   border: 0.5px solid var(--kb-gold-line);
   padding: 14px 20px;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 .why__media-cap .num {
@@ -1185,6 +1187,39 @@ button { font-family: inherit; cursor: pointer; border: 0; background: none; col
   margin-left: 6px;
 }
 
+/* Tour cards — image beside the body on desktop, stacked on tablet/phone.
+   The media is a real positioned box so the absolutely-positioned
+   .room-card__img has a defined containing block on every engine (the bare
+   layout broke on iOS Safari). min-height is a floor so it is never 0-height. */
+.tour-card { display: grid; grid-template-columns: 1fr 1.4fr; }
+.tour-card__media {
+  position: relative;
+  min-height: 260px;
+  overflow: hidden;
+}
+@media (max-width: 860px) {
+  .tour-card { grid-template-columns: 1fr; }
+  .tour-card__media { aspect-ratio: 4 / 3; min-height: 200px; }
+}
+
+/* aspect-ratio fallback — iOS Safari < 15 (and other old engines) don't
+   support aspect-ratio, which would collapse every image box to 0 height and
+   hide the photos. The padding-top ratio hack gives them height there.
+   Modern browsers ignore this block entirely. */
+@supports not (aspect-ratio: 1 / 1) {
+  .room-card__gallery::before,
+  .gallery-tile::before,
+  .pillar__img::before,
+  .dish__img::before,
+  .why__media::before {
+    content: "";
+    display: block;
+    padding-top: 75%; /* 4 : 3 */
+  }
+  .dish__img::before { padding-top: 100%; } /* 1 : 1 */
+  .why__media::before { padding-top: 125%; } /* 4 : 5 */
+}
+
 /* Filter bar */
 .filter-bar {
   display: flex;
@@ -1387,7 +1422,7 @@ button { font-family: inherit; cursor: pointer; border: 0; background: none; col
 .confirm__details .row b { color: var(--kb-text); font-weight: 400; font-family: var(--kb-serif); }
 
 /* Admin */
-.admin-shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.admin-shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; min-height: 100dvh; }
 @media (max-width: 900px) { .admin-shell { grid-template-columns: 1fr; } }
 .admin-side {
   background: #050505;
