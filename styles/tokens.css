@@ -1209,6 +1209,7 @@ button { font-family: inherit; cursor: pointer; border: 0; background: none; col
 @supports not (aspect-ratio: 1 / 1) {
   .room-card__gallery::before,
   .gallery-tile::before,
+  .tour-card__media::before,
   .pillar__img::before,
   .dish__img::before,
   .why__media::before {
